@@ -1,11 +1,11 @@
 [project]
-name = "gitmojilog"
+name = "girokmoji"
 version = "0.1.0"
 description = "Change log creator for gitmoji logs"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
-    "python-gitmojis>=1.0.0",
+    "pygit2>=1.17.0",
 ]
 authors = [
     { name = "Kim Milhan", email = "kimmilhan@gmail.com" },
@@ -14,15 +14,26 @@ keywords = ["emoji", "git", "gitmoji", "vcs", "ci", "release", "changelog"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Build Tools",
 ]
+[project.scripts]
+girokmoji = "girokmoji:__main__"
+
 [dependency-groups]
 dev = [
     "pyright>=1.1.393",
+    "pytest>=8.3.4",
     "ruff>=0.9.5",
 ]
+
+[tool.pyright]
+reportPrivateImportUsage = false
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
