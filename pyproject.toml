@@ -1,6 +1,6 @@
 [project]
 name = "girokmoji"
-version = "0.5.3"
+version = "0.5.4"
 description = "Change log creator for gitmoji logs"
 readme = "README.md"
 requires-python = ">=3.10"
