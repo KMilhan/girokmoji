@@ -87,10 +87,16 @@ _(And sometimes a little confusing.)_
         category_md = ""
         for commit in change[cat]:
             gitmoji, title = sep_gitmoji_msg_title(commit_message(commit))
-            catmoji = any_to_catmoji(gitmoji)
+            if gitmoji:
+                catmoji = any_to_catmoji(gitmoji)
+                emoji = catmoji.emoji
+                description = catmoji.description
+            else:
+                emoji = ""
+                description = ""
             entry = ENTRY(
-                emoji=catmoji.emoji,
-                gitmoji_description=catmoji.description,
+                emoji=emoji,
+                gitmoji_description=description,
                 commit_description=title,
                 commit_hash=str(commit.id),
             ).markdown
