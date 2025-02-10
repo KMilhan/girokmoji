@@ -32,5 +32,6 @@ def main():
     )
     print(changelog, file=sys.stdout)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
