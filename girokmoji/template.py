@@ -78,7 +78,7 @@ class DefaultCategorySection(CategorySection):
 
 class DefaultEntry(Entry):
     markdown_template: ClassVar[str] = (
-        "- **$emoji $gitmoji_description**: *[$commit_description]($commit_hash)*\n"
+        "- **$emoji $gitmoji_description**: [*$commit_description*](../../commit/$commit_hash)\n"
     )
 
     @property
