@@ -33,9 +33,10 @@ def get_category(msg: str, *, fallback_to_includes: bool = True) -> CATEGORY:
 
 def sep_gitmoji_msg_title(msg: str, *, strict: bool = False) -> tuple[str, str]:
     """Return gitmoji and message from commit message. Strict mode raises exception MessageDoesNotStartWithGitmojiError"""
+    msg = msg.split("\n")[0]
     for gitmoji in by_gitmoji().keys():
         if msg.startswith(gitmoji):
-            return gitmoji, gitmoji.removeprefix(gitmoji)
+            return gitmoji, msg.removeprefix(gitmoji).strip()
 
     if not strict:
         return "", msg.split("\n")[0]
@@ -50,9 +51,7 @@ def structured_changelog(commits: Iterable[Commit]) -> dict[CATEGORY, list[Commi
         structured_changelog[cat] = []
 
     for commit in commits:
-        msg = commit.message
-        if isinstance(msg, bytes):
-            msg = msg.decode(commit.message_encoding)
+        msg = commit_message(commit)
         try:
             cat: CATEGORY = get_category(msg)
         except NoGitmojiInMessageError:
