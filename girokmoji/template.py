@@ -42,7 +42,7 @@ class Separator(SupportTemplate):
 
 class DefaultHead(Head):
     markdown_template = """
-# 🚀 [$project_name] Release Changelog $version
+# 🚀 **$project_name** Release Changelog $version
 
 $subtext
 
@@ -62,7 +62,7 @@ $subtext
 
 class DefaultCategorySection(CategorySection):
     markdown_template: ClassVar[str] = """
-## $category :boom: :ambulance:
+## $category
 
 *$subtext*
 
@@ -77,11 +77,9 @@ class DefaultCategorySection(CategorySection):
 
 
 class DefaultEntry(Entry):
-    markdown_template: ClassVar[str] = """
-
-- **$emoji $gitmoji_description**: *[$commit_description]($commit_hash)*
-
-"""
+    markdown_template: ClassVar[str] = (
+        "- **$emoji $gitmoji_description**: *[$commit_description]($commit_hash)*\n"
+    )
 
     @property
     def markdown(self):
@@ -95,10 +93,7 @@ class DefaultEntry(Entry):
 
 class DefaultSeparator(Separator):
     markdown_template: ClassVar[str] = """
-
-
 ---
-
 
 """
 

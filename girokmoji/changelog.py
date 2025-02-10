@@ -4,13 +4,13 @@ from typing import Iterable
 from pygit2 import Commit
 
 from girokmoji.catgitmoji import by_gitmoji, any_to_catmoji
-from girokmoji.const import CATEGORY, category_order
+from girokmoji.const import CATEGORY, category_order, CATEGORY_SUBTEXTS
 from girokmoji.exception import (
     NoGitmojiInMessageError,
     MessageDoesNotStartWithGitmojiError,
 )
 from girokmoji.git import get_tag_to_tag_commits
-from girokmoji.template import SEPARATOR, HEAD, ENTRY
+from girokmoji.template import SEPARATOR, HEAD, ENTRY, CATEGORY_SECTION
 
 
 def commit_message(commit: Commit) -> str:
@@ -74,11 +74,8 @@ def gen_markdown(
         project_name=project_name,
         version=version,
         subtext="""
-    
-    _"Change is always thrilling!"_  
-    _(And sometimes a little confusing.)_
-    
-    
+_"Change is always thrilling!"_  
+_(And sometimes a little confusing.)_
     """,
         release_date=release_date,
     ).markdown
@@ -87,6 +84,7 @@ def gen_markdown(
     changelog_markdown += separator
 
     for cat in change:
+        category_md = ""
         for commit in change[cat]:
             gitmoji, title = sep_gitmoji_msg_title(commit_message(commit))
             catmoji = any_to_catmoji(gitmoji)
@@ -96,8 +94,11 @@ def gen_markdown(
                 commit_description=title,
                 commit_hash=str(commit.id),
             ).markdown
-            changelog_markdown += entry
-        changelog_markdown += separator
+            category_md += entry
+        if category_md:
+            changelog_markdown += CATEGORY_SECTION(cat, CATEGORY_SUBTEXTS[cat]).markdown
+            changelog_markdown += category_md
+            changelog_markdown += separator
 
     return changelog_markdown
 
@@ -118,4 +119,4 @@ def change_log(
         version,
         release_date,
         structured_changelog(get_tag_to_tag_commits(repo_dir, tail_tag, head_tag)),
-    )
+    ).strip()
