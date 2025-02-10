@@ -9,3 +9,6 @@ _기록 + Gitmoji_
 We use minimum dependencies. Currently, only pygit2, which requires no runtime `git` executable, good enough binary
 distributions, is used.
 
+## Example
+
+Go [EXAMPLE.md](./EXAMPLE.md)
