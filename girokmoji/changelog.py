@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Iterable
+import json
 
 from pygit2 import Commit
 
@@ -120,3 +121,33 @@ def change_log(
         release_date,
         structured_changelog(get_tag_to_tag_commits(repo_dir, tail_tag, head_tag)),
     ).strip()
+
+
+def github_release_payload(
+    project_name: str,
+    release_date: str,
+    repo_dir: Path,
+    tail_tag: str,
+    head_tag: str,
+    version: str | None = None,
+    *,
+    draft: bool = False,
+    prerelease: bool = False,
+) -> str:
+    """Return GitHub release payload as JSON string."""
+    changelog = change_log(
+        project_name=project_name,
+        release_date=release_date,
+        repo_dir=repo_dir,
+        tail_tag=tail_tag,
+        head_tag=head_tag,
+        version=version,
+    )
+    payload = {
+        "tag_name": head_tag,
+        "name": version or head_tag,
+        "body": changelog,
+        "draft": draft,
+        "prerelease": prerelease,
+    }
+    return json.dumps(payload)
