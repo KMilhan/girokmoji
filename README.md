@@ -63,6 +63,41 @@ or
 girokmoji TEST_PROJECT_NAME 2025-02-10 test_repository_dir v0.1.0 v0.5.2 > release_note.md
 ```
 
+### GitHub Release payload
+
+To create JSON payload for GitHub Release:
+
+```bash
+girokmoji TEST_PROJECT_NAME 2025-02-10 test_repository_dir v0.1.0 v0.5.2 --github-payload > release.json
+```
+
 ## Example
 
 For generated release note, go [EXAMPLE.md](./EXAMPLE.md)
+
+## Development and Testing
+
+The recommended workflow for local development uses `uv` for dependency
+management. `uv` creates an isolated virtual environment and installs the
+required packages using its own resolver.
+
+```bash
+# create a virtual environment in `.venv`
+uv venv
+
+# install main and development dependencies
+uv pip install -e ".[dev]"
+
+# run the test suite
+pytest
+
+# When `uv` is not available you can fall back to `pip`
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+pytest
+```
+
+Avoid running `uv run pytest`; simply invoking `pytest` after installation
+ensures the tests run in the activated environment. If dependency installation
+fails due to network restrictions, document the failure when submitting patches.

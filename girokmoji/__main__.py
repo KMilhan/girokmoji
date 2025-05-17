@@ -2,7 +2,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from girokmoji.changelog import change_log
+from girokmoji.changelog import change_log, github_release_payload
 
 
 parser = argparse.ArgumentParser(
@@ -18,15 +18,31 @@ parser.add_argument(
     help="Optional version string (defaults to head_tag if not provided)",
     default=None,
 )
+parser.add_argument(
+    "--github-payload",
+    action="store_true",
+    help="Output GitHub Release payload JSON instead of markdown",
+)
 
 args = parser.parse_args()
 
-changelog = change_log(
-    project_name=args.project_name,
-    release_date=args.release_date,
-    repo_dir=args.repo_dir,
-    tail_tag=args.tail_tag,
-    head_tag=args.head_tag,
-    version=args.version,
-)
-print(changelog, file=sys.stdout)
+if args.github_payload:
+    payload = github_release_payload(
+        project_name=args.project_name,
+        release_date=args.release_date,
+        repo_dir=args.repo_dir,
+        tail_tag=args.tail_tag,
+        head_tag=args.head_tag,
+        version=args.version,
+    )
+    print(payload, file=sys.stdout)
+else:
+    changelog = change_log(
+        project_name=args.project_name,
+        release_date=args.release_date,
+        repo_dir=args.repo_dir,
+        tail_tag=args.tail_tag,
+        head_tag=args.head_tag,
+        version=args.version,
+    )
+    print(changelog, file=sys.stdout)
