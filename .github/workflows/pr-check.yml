@@ -13,21 +13,20 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install uv
-          uv venv
           uv sync
-          .venv/bin/pip install .[dev]
 
       - name: Ruff format check
         run: |
-          .venv/bin/ruff format --check .
+          uv run ruff format --check .
 
       - name: Run tests
         run: |
-          .venv/bin/pytest -q
+          uv run pytest -q
 
       - name: Check gitmoji commit
         run: |
