@@ -29,7 +29,10 @@ def test_get_category_and_sep_title():
     emoji, title = changelog.sep_gitmoji_msg_title(msg, strict=True)
     assert emoji == ":art:"
     assert title == "refactor"
-    assert changelog.sep_gitmoji_msg_title("no gitmoji", strict=False) == ("", "no gitmoji")
+    assert changelog.sep_gitmoji_msg_title("no gitmoji", strict=False) == (
+        "",
+        "no gitmoji",
+    )
     with pytest.raises(changelog.MessageDoesNotStartWithGitmojiError):
         changelog.sep_gitmoji_msg_title("no gitmoji", strict=True)
 
@@ -41,7 +44,10 @@ def test_structured_and_markdown(monkeypatch):
 
     def fake_get_tag_to_tag_commits(repo_dir, tail_tag, head_tag):
         return commits
-    monkeypatch.setattr(changelog, "get_tag_to_tag_commits", fake_get_tag_to_tag_commits)
+
+    monkeypatch.setattr(
+        changelog, "get_tag_to_tag_commits", fake_get_tag_to_tag_commits
+    )
 
     md = changelog.change_log("proj", "2024-01-01", Path("."), "v0", "v1")
     assert "proj" in md
