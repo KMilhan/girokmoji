@@ -34,10 +34,22 @@ traverse to the past tag.
 
 ### Installation
 
-If you have `uv`, ***skip***.
+#### with `uv` (recommended for development)
 
-Or,
-In case you are sure you have isolated environment,
+Install [`uv`](https://github.com/astral-sh/uv) and create a virtual environment:
+
+```bash
+uv pip install girokmoji
+```
+
+The last command installs this package together with development tools such as
+`pytest`. Use `uv pip` inside the environment whenever you need to add more
+packages.
+
+#### with isolated `pip`
+
+If you do not use `uv`, you can install the project with plain `pip` in an
+already isolated environment:
 
 ```bash
 pip install girokmoji
@@ -86,18 +98,8 @@ required packages using its own resolver.
 uv venv
 
 # install main and development dependencies
-uv pip install -e ".[dev]"
+uv sync"
 
 # run the test suite
-pytest
-
-# When `uv` is not available you can fall back to `pip`
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-pytest
+uv run pytest
 ```
-
-Avoid running `uv run pytest`; simply invoking `pytest` after installation
-ensures the tests run in the activated environment. If dependency installation
-fails due to network restrictions, document the failure when submitting patches.
