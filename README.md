@@ -39,9 +39,7 @@ traverse to the past tag.
 Install [`uv`](https://github.com/astral-sh/uv) and create a virtual environment:
 
 ```bash
-uv venv
-source .venv/bin/activate
-uv pip install -e ".[dev]"
+uv pip install girokmoji
 ```
 
 The last command installs this package together with development tools such as
