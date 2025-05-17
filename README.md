@@ -83,19 +83,23 @@ To create JSON payload for GitHub Release:
 girokmoji TEST_PROJECT_NAME 2025-02-10 test_repository_dir v0.1.0 v0.5.2 --github-payload > release.json
 ```
 
-### Testing
-
-Once the development dependencies are installed (see the Installation section),
-activate the virtual environment and run the test suite:
-
-```bash
-pytest -q
-```
-
-Running `pytest` directly ensures the package installed in the environment is
-used correctly. Using `uv run pytest` is discouraged as it may skip the local
-installation.
-
 ## Example
 
 For generated release note, go [EXAMPLE.md](./EXAMPLE.md)
+
+## Development and Testing
+
+The recommended workflow for local development uses `uv` for dependency
+management. `uv` creates an isolated virtual environment and installs the
+required packages using its own resolver.
+
+```bash
+# create a virtual environment in `.venv`
+uv venv
+
+# install main and development dependencies
+uv sync"
+
+# run the test suite
+uv run pytest
+```
