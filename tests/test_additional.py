@@ -1,14 +1,12 @@
-import pytest
 from pathlib import Path
-from tempfile import TemporaryDirectory
-from uuid import uuid4
 
-from pygit2 import init_repository, Repository, Signature
+import pytest
+from pygit2 import init_repository, Signature
 from pygit2.enums import ObjectType
 
 from girokmoji import changelog, catgitmoji
-from girokmoji.git import get_tag_to_tag_commits
 from girokmoji.exception import NoGitmojiInMessageError, NoSuchTagFoundError
+from girokmoji.git import get_tag_to_tag_commits
 from girokmoji.template import SupportTemplate
 
 

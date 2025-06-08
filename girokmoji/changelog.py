@@ -1,6 +1,6 @@
+import json
 from pathlib import Path
 from typing import Iterable
-import json
 
 from pygit2 import Commit
 
@@ -12,8 +12,8 @@ from girokmoji.exception import (
     NoSuchGitmojiSupportedError,
 )
 from girokmoji.git import get_tag_to_tag_commits
-from girokmoji.template import SEPARATOR, HEAD, ENTRY, CATEGORY_SECTION
 from girokmoji.template import ENTRY_GROUP_HEADER, ENTRY_SUBITEM
+from girokmoji.template import SEPARATOR, HEAD, CATEGORY_SECTION
 
 
 def commit_message(commit: Commit) -> str:
