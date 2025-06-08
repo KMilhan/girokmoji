@@ -25,7 +25,7 @@ classifiers = [
     "Topic :: Software Development :: Build Tools",
 ]
 [project.scripts]
-girokmoji = "girokmoji:__main__"
+girokmoji = "girokmoji.__main__:main"
 
 [dependency-groups]
 dev = [
