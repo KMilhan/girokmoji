@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Upload Python Package
+name: Publish Python Package to PyPI
 
 on:
   release:
@@ -24,13 +24,22 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: "3.11"
+
+      - name: Install uv and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv
+          uv pip install .
+          uv pip install pytest
+
+      - name: Run tests
+        run: uv run pytest
 
       - name: Build release distributions
         run: |
           # NOTE: put your own distribution build steps here.
-          python -m pip install build
-          python -m build
+          uv build
 
       - name: Upload distributions
         uses: actions/upload-artifact@v4
