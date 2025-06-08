@@ -105,3 +105,9 @@ uv sync
 uv run pytest
 ```
 See [multiline commit test](docs/multiline_commit_test.md) for multi-line commit examples and how commits are grouped in release notes.
+
+## Publishing to PyPI
+
+The "Publish Python Package to PyPI" workflow can be dispatched manually. Provide the
+`tag` input to select which release tag should be built and uploaded. The workflow
+checks out the chosen tag, runs tests, builds the package and then deploys it to PyPI.
