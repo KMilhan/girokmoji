@@ -6,20 +6,20 @@ _기록 + Gitmoji_
 
 ## Minimum Dependencies
 
-We use minimum dependencies. Currently, only pygit2, which requires no runtime `git` executable, good enough binary
-distributions, is used.
+We use minimum dependencies. Currently, only pygit2, which requires no runtime
+`git` executable, good enough binary distributions, is used.
 
 ## Designed for General Use
 
 ### Pipeline as a trigger
 
-Pipelines, such as SCM provided ones (e.g., GitHub Actions), dedicated solutions (e.g., Jenkins) are best when you use
-it as a ***"trigger"***.
+Pipelines, such as SCM provided ones (e.g., GitHub Actions), dedicated solutions
+(e.g., Jenkins) are best when you use it as a ***"trigger"***.
 
 ### Do a single thing
 
-This only generates release note. This project has no interest in versioning scheme, repository scheme (mono/poly war),
-even tag order. Just put two tags.
+This only generates release note. This project has no interest in versioning
+scheme, repository scheme (mono/poly war), even tag order. Just put two tags.
 
 ## Basic use case
 
@@ -36,7 +36,8 @@ traverse to the past tag.
 
 #### with `uv` (recommended for development)
 
-Install [`uv`](https://github.com/astral-sh/uv) and create a virtual environment:
+Install [`uv`](https://github.com/astral-sh/uv) and create a virtual
+environment:
 
 ```bash
 uv pip install girokmoji
@@ -98,7 +99,7 @@ required packages using its own resolver.
 uv venv
 
 # install main and development dependencies
-uv sync"
+uv sync
 
 # run the test suite
 uv run pytest
