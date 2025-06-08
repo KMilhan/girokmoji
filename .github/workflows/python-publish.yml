@@ -10,7 +10,7 @@ name: Publish Python Package to PyPI
 
 on:
   release:
-    types: [published]
+    types: [released]
   workflow_dispatch:
     inputs:
       tag:
