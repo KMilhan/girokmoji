@@ -13,6 +13,15 @@ on:
           - major
         default: patch
 
+permissions:
+  attestations: write
+  contents: write
+  id-token: read
+  packages: write
+  deployments: write
+  actions: write
+  checks: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
