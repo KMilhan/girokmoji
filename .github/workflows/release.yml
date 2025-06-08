@@ -34,9 +34,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "head=$(semantic-release version --print-last-released-tag)" >> "$GITHUB_OUTPUT"
-          echo "tail=$(semantic-release version --${{ inputs.bump }} --print-tag)" >> "$GITHUB_OUTPUT"
-          semantic-release version --${{ inputs.bump }}
+          echo "head=$(uv run semantic-release version --print-last-released-tag)" >> "$GITHUB_OUTPUT"
+          echo "tail=$(uv run semantic-release version --${{ inputs.bump }} --print-tag)" >> "$GITHUB_OUTPUT"
+          uv run semantic-release version --${{ inputs.bump }}
 
       - name: Push version bump
         run: |
