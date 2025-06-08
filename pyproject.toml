@@ -1,6 +1,6 @@
 [project]
 name = "girokmoji"
-version = "0.5.6"
+dynamic = ["version"]
 description = "Change log creator for gitmoji logs"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -40,8 +40,14 @@ dev = [
 reportPrivateImportUsage = false
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "uv-dynamic-versioning"]
 build-backend = "hatchling.build"
 
 [tool.semantic_release]
-version_variables = ["pyproject.toml:project.version"]
+version_variables = ["girokmoji/__init__.py:__version__"]
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[tool.uv-dynamic-versioning]
+fallback-version = "0.0.0"
