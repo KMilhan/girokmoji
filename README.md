@@ -104,3 +104,4 @@ uv sync
 # run the test suite
 uv run pytest
 ```
+See [multiline commit test](docs/multiline_commit_test.md) for multi-line commit examples and how commits are grouped in release notes.

@@ -35,7 +35,7 @@ def test_get_category_and_sep_title():
 
 
 def test_structured_and_markdown(monkeypatch):
-    commits = [FakeCommit(":sparkles: feat"), FakeCommit(":bug: fix")]
+    commits = [FakeCommit(":sparkles: first"), FakeCommit(":sparkles: second")]
     structured = changelog.structured_changelog(commits)
     assert structured[catgitmoji.by_code()[":sparkles:"].category][0] is commits[0]
 
@@ -44,7 +44,8 @@ def test_structured_and_markdown(monkeypatch):
     monkeypatch.setattr(changelog, "get_tag_to_tag_commits", fake_get_tag_to_tag_commits)
 
     md = changelog.change_log("proj", "2024-01-01", Path("."), "v0", "v1")
-    assert "proj" in md
+    assert md.count("Introduce new features.") == 1
+    assert "first" in md and "second" in md
     payload = json.loads(
         changelog.github_release_payload("proj", "2024-01-01", Path("."), "v0", "v1")
     )

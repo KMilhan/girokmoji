@@ -18,5 +18,12 @@ def test_templates():
         commit_hash="abc",
     )
     assert "abc" in entry.markdown
+    header = template.ENTRY_GROUP_HEADER(
+        emoji="🐛",
+        gitmoji_description="bug",
+    )
+    assert "bug" in header.markdown
+    sub = template.ENTRY_SUBITEM(commit_description="fix", commit_hash="abc")
+    assert "fix" in sub.markdown
     sep = template.SEPARATOR()
     assert "---" in sep.markdown
