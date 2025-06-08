@@ -8,9 +8,10 @@ on:
         required: true
         type: choice
         options:
-          - major
-          - minor
           - patch
+          - minor
+          - major
+        default: patch
 
 jobs:
   release:
@@ -20,20 +21,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
-      - name: Install uv and semantic-release
-        run: |
-          python -m pip install --upgrade pip
-          pip install uv
-          uv pip install python-semantic-release
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
 
       - name: Run semantic-release
+        id: version-bump
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo "head=$(semantic-release version --print-last-released-tag)" >> "$GITHUB_OUTPUT"
+          echo "tail=$(semantic-release version --${{ inputs.bump }} --print-tag)" >> "$GITHUB_OUTPUT"
           semantic-release version --${{ inputs.bump }}
 
       - name: Push version bump
@@ -44,24 +46,17 @@ jobs:
       - name: Install project
         run: uv pip install .
 
-      - id: tags
-        name: Determine tags
-        run: |
-          echo "head=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
-          echo "tail=$(git describe --tags --abbrev=0 HEAD^)" >> "$GITHUB_OUTPUT"
-
       - name: Generate release notes
         run: |
           uvx --from "./" girokmoji girokmoji $(date -I) . \
-            ${{ steps.tags.outputs.tail }} ${{ steps.tags.outputs.head }} \
+            ${{ steps.version-bump.outputs.tail }} ${{ steps.version-bump.outputs.head }} \
             --github-payload > release.json
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v1
         with:
           body_path: release.json
-          tag_name: ${{ steps.tags.outputs.head }}
-          name: ${{ steps.tags.outputs.head }}
+          tag_name: ${{ steps.version-bump.outputs.head }}
+          name: ${{ steps.version-bump.outputs.head }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
