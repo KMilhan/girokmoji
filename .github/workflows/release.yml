@@ -1,0 +1,67 @@
+name: Semantic Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version part to bump"
+        required: true
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv and semantic-release
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv
+          uv pip install python-semantic-release
+
+      - name: Run semantic-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          semantic-release version --${{ inputs.bump }}
+
+      - name: Push version bump
+        run: |
+          git push origin HEAD:${{ github.ref }}
+          git push origin --tags
+
+      - name: Install project
+        run: uv pip install .
+
+      - id: tags
+        name: Determine tags
+        run: |
+          echo "head=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
+          echo "tail=$(git describe --tags --abbrev=0 HEAD^)" >> "$GITHUB_OUTPUT"
+
+      - name: Generate release notes
+        run: |
+          uvx --from "./" girokmoji girokmoji $(date -I) . \
+            ${{ steps.tags.outputs.tail }} ${{ steps.tags.outputs.head }} \
+            --github-payload > release.json
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: release.json
+          tag_name: ${{ steps.tags.outputs.head }}
+          name: ${{ steps.tags.outputs.head }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
