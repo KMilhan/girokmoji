@@ -9,9 +9,11 @@ from girokmoji.const import CATEGORY, category_order, CATEGORY_SUBTEXTS
 from girokmoji.exception import (
     NoGitmojiInMessageError,
     MessageDoesNotStartWithGitmojiError,
+    NoSuchGitmojiSupportedError,
 )
 from girokmoji.git import get_tag_to_tag_commits
 from girokmoji.template import SEPARATOR, HEAD, ENTRY, CATEGORY_SECTION
+from girokmoji.template import ENTRY_GROUP_HEADER, ENTRY_SUBITEM
 
 
 def commit_message(commit: Commit) -> str:
@@ -86,16 +88,32 @@ _(And sometimes a little confusing.)_
 
     for cat in change:
         category_md = ""
+        subcats: dict[tuple[str, str], list[tuple[str, str]]] = {}
         for commit in change[cat]:
             gitmoji, title = sep_gitmoji_msg_title(commit_message(commit))
-            catmoji = any_to_catmoji(gitmoji)
-            entry = ENTRY(
-                emoji=catmoji.emoji,
-                gitmoji_description=catmoji.description,
-                commit_description=title,
-                commit_hash=str(commit.id),
+            if not gitmoji:
+                # Ignore commits without a recognizable gitmoji
+                continue
+            try:
+                catmoji = any_to_catmoji(gitmoji)
+            except NoSuchGitmojiSupportedError:
+                # Skip unsupported gitmoji rather than error out
+                continue
+            key = (catmoji.emoji, catmoji.description)
+            subcats.setdefault(key, []).append((title, str(commit.id)))
+
+        for (emoji, description), items in subcats.items():
+            header = ENTRY_GROUP_HEADER(
+                emoji=emoji,
+                gitmoji_description=description,
             ).markdown
-            category_md += entry
+            category_md += header
+            for title, commit_hash in items:
+                item = ENTRY_SUBITEM(
+                    commit_description=title,
+                    commit_hash=commit_hash,
+                ).markdown
+                category_md += item
         if category_md:
             changelog_markdown += CATEGORY_SECTION(cat, CATEGORY_SUBTEXTS[cat]).markdown
             changelog_markdown += category_md

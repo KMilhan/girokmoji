@@ -91,6 +91,42 @@ class DefaultEntry(Entry):
         )
 
 
+@dataclass
+class EntryGroupHeader(SupportTemplate):
+    emoji: str
+    gitmoji_description: str
+
+
+class DefaultEntryGroupHeader(EntryGroupHeader):
+    markdown_template: ClassVar[str] = "- **$emoji $gitmoji_description**\n"
+
+    @property
+    def markdown(self):
+        return Template(self.markdown_template).substitute(
+            emoji=self.emoji,
+            gitmoji_description=self.gitmoji_description,
+        )
+
+
+@dataclass
+class EntrySubItem(SupportTemplate):
+    commit_description: str
+    commit_hash: str
+
+
+class DefaultEntrySubItem(EntrySubItem):
+    markdown_template: ClassVar[str] = (
+        "  - [*$commit_description*](../../commit/$commit_hash)\n"
+    )
+
+    @property
+    def markdown(self):
+        return Template(self.markdown_template).substitute(
+            commit_description=self.commit_description,
+            commit_hash=self.commit_hash,
+        )
+
+
 class DefaultSeparator(Separator):
     markdown_template: ClassVar[str] = """
 ---
@@ -105,4 +141,6 @@ class DefaultSeparator(Separator):
 HEAD = DefaultHead
 CATEGORY_SECTION = DefaultCategorySection
 ENTRY = DefaultEntry
+ENTRY_GROUP_HEADER = DefaultEntryGroupHeader
+ENTRY_SUBITEM = DefaultEntrySubItem
 SEPARATOR = DefaultSeparator
