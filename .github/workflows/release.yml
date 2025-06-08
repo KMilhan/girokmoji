@@ -16,7 +16,6 @@ on:
 permissions:
   attestations: write
   contents: write
-  id-token: read
   packages: write
   deployments: write
   actions: write
