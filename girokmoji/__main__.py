@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from girokmoji.changelog import change_log, github_release_payload
+from girokmoji import __version__
 
 
 def main() -> None:
@@ -24,6 +25,12 @@ def main() -> None:
         "--github-payload",
         action="store_true",
         help="Output GitHub Release payload JSON instead of markdown",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="Show program's version number and exit",
     )
 
     args = parser.parse_args()

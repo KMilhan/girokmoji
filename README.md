@@ -76,6 +76,12 @@ or
 girokmoji TEST_PROJECT_NAME 2025-02-10 test_repository_dir v0.1.0 v0.5.2 > release_note.md
 ```
 
+### Show version
+
+```bash
+girokmoji --version
+```
+
 ### GitHub Release payload
 
 To create JSON payload for GitHub Release:
