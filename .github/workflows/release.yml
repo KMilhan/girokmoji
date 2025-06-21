@@ -42,8 +42,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "head=$(uv run semantic-release version --print-last-released-tag)" >> "$GITHUB_OUTPUT"
-          echo "tail=$(uv run semantic-release version --${{ inputs.bump }} --print-tag)" >> "$GITHUB_OUTPUT"
+          echo "previous=$(uv run semantic-release version --print-last-released-tag)" >> "$GITHUB_OUTPUT"
+          echo "new=$(uv run semantic-release version --${{ inputs.bump }} --print-tag)" >> "$GITHUB_OUTPUT"
           uv run semantic-release version --${{ inputs.bump }}
 
       - name: Push version bump
@@ -57,14 +57,14 @@ jobs:
       - name: Generate release notes
         run: |
           uvx --from "./" girokmoji girokmoji $(date -I) . \
-            ${{ steps.version-bump.outputs.tail }} ${{ steps.version-bump.outputs.head }} \
-            --github-payload > release.json
+            ${{ steps.version-bump.outputs.previous }} ${{ steps.version-bump.outputs.new }} \
+            > release.md
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v1
         with:
-          body_path: release.json
-          tag_name: ${{ steps.version-bump.outputs.head }}
-          name: ${{ steps.version-bump.outputs.head }}
+          body_path: release.md
+          tag_name: ${{ steps.version-bump.outputs.new }}
+          name: ${{ steps.version-bump.outputs.new }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
