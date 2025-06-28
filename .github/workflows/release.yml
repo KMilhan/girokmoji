@@ -56,7 +56,7 @@ jobs:
 
       - name: Generate release notes
         run: |
-          uvx --from "./" girokmoji girokmoji release . \
+          uvx --from "./" girokmoji release . \
             --bump ${{ inputs.bump }} > release.md
 
       - name: Create GitHub release
