@@ -56,9 +56,8 @@ jobs:
 
       - name: Generate release notes
         run: |
-          uvx --from "./" girokmoji girokmoji $(date -I) . \
-            ${{ steps.version-bump.outputs.previous }} ${{ steps.version-bump.outputs.new }} \
-            > release.md
+          uvx --from "./" girokmoji girokmoji release . \
+            --bump ${{ inputs.bump }} > release.md
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v1
