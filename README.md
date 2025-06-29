@@ -1,10 +1,9 @@
 # Girokmoji
 
-Changelog Generator for Gitmoji enthusiasts
+**Automatic changelog generator with built-in SemVer 2.0 tagging.**
 
-_기록 + Gitmoji_
+Turn your Gitmoji commits into release notes and version bumps. Girokmoji relies solely on `pygit2` and runs anywhere `libgit2` is available.
 
-## Minimum Dependencies
 
 We use minimum dependencies. Currently, only pygit2, which requires no runtime
 `git` executable, good enough binary distributions, is used.
@@ -127,6 +126,20 @@ uv sync
 uv run pytest
 ```
 See [multiline commit test](docs/multiline_commit_test.md) for multi-line commit examples and how commits are grouped in release notes.
+## Continuous Integration
+
+A typical pipeline installs `uv`, syncs dependencies and runs girokmoji via `uvx`:
+
+```yaml
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0
+- uses: astral-sh/setup-uv@v5
+- run: uv pip install .
+- run: pytest
+- run: uvx --from "girokmoji@latest" girokmoji release MyProject --bump patch --repo-dir .
+```
+
 
 ## Publishing to PyPI
 
