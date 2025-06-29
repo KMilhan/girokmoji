@@ -44,7 +44,7 @@ jobs:
 
       - name: Generate release notes
         run: |
-          uvx --from "./" girokmoji release . \
+          uvx --from "./" girokmoji release Girokmoji \
             --bump ${{ inputs.bump }} > release.md
 
       - name: Push version bump
@@ -59,6 +59,6 @@ jobs:
         with:
           body_path: release.md
           tag_name: ${{ steps.version-bump.outputs.new }}
-          name: ${{ steps.version-bump.outputs.new }}
+          name: ":package: ${{ steps.version-bump.outputs.new }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
