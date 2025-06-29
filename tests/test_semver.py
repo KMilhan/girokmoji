@@ -69,3 +69,42 @@ def test_auto_release_with_semver(tmp_path: Path):
     assert "refs/tags/v1.0.1" in tags
     assert "proj" in note
 
+
+def test_auto_release_without_user_config(tmp_path: Path):
+    repo = init_repository(tmp_path)
+    sig = Signature("t", "t@example.com")
+    f = tmp_path / "f.txt"
+    f.write_text("a")
+    repo.index.add_all()
+    commit1 = repo.create_commit(
+        "HEAD",
+        sig,
+        sig,
+        ":tada: init",
+        repo.index.write_tree(),
+        [],
+    )
+    repo.create_tag("v1.0.0", commit1, ObjectType.COMMIT, sig, "t1")
+    f.write_text("b")
+    repo.index.add_all()
+    repo.create_commit(
+        "HEAD",
+        sig,
+        sig,
+        ":sparkles: update",
+        repo.index.write_tree(),
+        [commit1],
+    )
+    try:
+        repo.config.delete_multivar("user.name", ".*")
+    except KeyError:
+        pass
+    try:
+        repo.config.delete_multivar("user.email", ".*")
+    except KeyError:
+        pass
+    note = auto_release("proj", repo_dir=tmp_path, bump="patch")
+    tags = [r for r in repo.references if r.startswith("refs/tags/")]
+    assert "refs/tags/v1.0.1" in tags
+    assert "proj" in note
+

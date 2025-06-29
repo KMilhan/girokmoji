@@ -1,0 +1,25 @@
+name: Unit Tests
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: '.python-version'
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv sync
+      - name: Run tests
+        run: .venv/bin/pytest -q

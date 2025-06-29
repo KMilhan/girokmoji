@@ -37,6 +37,11 @@ jobs:
         with:
           python-version-file: ".python-version"
 
+      - name: Configure git user
+        run: |
+          git config user.name "girokmoji"
+          git config user.email "release@girokmoji"
+
       - name: Generate release notes
         run: |
           uvx --from "./" girokmoji release . \
