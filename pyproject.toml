@@ -5,7 +5,7 @@ description = "Change log creator for gitmoji logs"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "pygit2>=1.17.0",
+    "pygit2<2",
 ]
 authors = [
     { name = "Kim Milhan", email = "kimmilhan@gmail.com" },
@@ -32,7 +32,6 @@ dev = [
     "coverage>=7.8.0",
     "pyright>=1.1.393",
     "pytest>=8.3.4",
-    "python-semantic-release>=10.0.2",
     "ruff>=0.9.5",
 ]
 
@@ -42,9 +41,6 @@ reportPrivateImportUsage = false
 [build-system]
 requires = ["hatchling", "uv-dynamic-versioning"]
 build-backend = "hatchling.build"
-
-[tool.semantic_release]
-version_variables = ["girokmoji/__init__.py:__version__"]
 
 [tool.hatch.version]
 source = "uv-dynamic-versioning"
