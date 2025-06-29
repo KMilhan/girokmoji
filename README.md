@@ -17,8 +17,10 @@ Pipelines, such as SCM provided ones (e.g., GitHub Actions), dedicated solutions
 
 ### Do a single thing
 
-This only generates release note. This project has no interest in versioning
-scheme, repository scheme (mono/poly war), even tag order. Just put two tags.
+Release notes and tagging with Gitmoji flair.
+
+Powered by a SemVer 2.0 parser, the `release` command tags your repo and outputs the changelog.
+Run it with `uvx` in CI for reproducible builds.
 
 ## Basic use case
 
