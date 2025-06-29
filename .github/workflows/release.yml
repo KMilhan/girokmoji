@@ -37,27 +37,15 @@ jobs:
         with:
           python-version-file: ".python-version"
 
-      - name: Run semantic-release
-        id: version-bump
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate release notes
         run: |
-          echo "previous=$(uv run semantic-release version --print-last-released-tag)" >> "$GITHUB_OUTPUT"
-          echo "new=$(uv run semantic-release version --${{ inputs.bump }} --print-tag)" >> "$GITHUB_OUTPUT"
-          uv run semantic-release version --${{ inputs.bump }}
+          uvx --from "./" girokmoji release . \
+            --bump ${{ inputs.bump }} > release.md
 
       - name: Push version bump
         run: |
           git push origin HEAD:${{ github.ref }}
           git push origin --tags
-
-      - name: Install project
-        run: uv pip install .
-
-      - name: Generate release notes
-        run: |
-          uvx --from "./" girokmoji release . \
-            --bump ${{ inputs.bump }} > release.md
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v1
