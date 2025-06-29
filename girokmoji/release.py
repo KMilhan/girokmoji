@@ -53,7 +53,11 @@ def auto_release(
     new_version = last_version.bump(bump)
     new_tag = f"v{new_version}"
 
-    sig = repo.default_signature or Signature("girokmoji", "release@girokmoji")
+    try:
+        sig = repo.default_signature
+    except KeyError:
+        sig = None
+    sig = sig or Signature("girokmoji", "release@girokmoji")
     repo.create_tag(new_tag, repo.head.target, ObjectType.COMMIT, sig, new_tag)
 
     if github_payload:
