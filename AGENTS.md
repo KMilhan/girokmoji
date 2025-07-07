@@ -9,7 +9,7 @@ purpose is to guide development following these methodologies precisely.
 
 - Write the simplest failing test first
 
-- Implement the minimum code needed to make tests pass
+- Implement the minimum code needed to make the tests pass
 
 - Refactor only after tests are passing
 
@@ -105,7 +105,7 @@ When approaching a new feature:
 
 Follow this process precisely, always prioritizing clean, well-tested code over quick implementation.
 
-Always write one test at a time, make it run, then improve structure. Always run all the tests (except long-running
+Always write one test at a time, make it run, then improve the structure. Always run all the tests (except long-running
 tests) each time.
 
 # Python-specific
@@ -113,19 +113,30 @@ tests) each time.
 - Prefer function style over class style.
 - Prefer dependency injection style over managed resource or singleton.
 - When threading seems attractive, consider using `asyncio`.
-- When compute-heavy operation is needed, think if avoiding GIL
-  and awaiting is possible instead of forking Python processes.
+- When a compute-heavy operation is needed, think of avoiding GIL
+  and using await possible instead of forking Python processes.
     - Prefer `numba` for compute-heavy operations over Cython, consider
       deeply about SIMD/MIMD, accelerated via GPU/accelerator operation.
-    - Prefer array or tensor -based data structure for
+    - Prefer array or tensor-based data structure for
       internal communication over library-specific data structure, for example, `Pillow` image data.
-- Follow PEP over traditions, for example, strict `pyproject.toml` structure.
-- All configurations for tools are managed inside `pyproject.toml` instead of dedicated files per tools unless
+- Follow PEP over traditions, for example, a strict `pyproject.toml` structure.
+- All configurations for tools are managed inside `pyproject.toml` instead of dedicated files per tool unless
   inevitable.
-  Dependencies and virtual environments are managed via `uv`, and build must done by `hatchling` but `uv build` or
+- Dependencies and virtual environments are managed via `uv`, and the build must be done by `hatchling`, but `uv build` or
   `pip install` must play with it.
+- Compiling a specific module is recommended, as it is helpful in achieving a bit-perfect artifact and native performance optimization.
 
-- Follow Zen of Python.
+- Follow the Zen of Python.
+
+# C/C++ -specific
+
+- Implementation must be done expecting Python's GIL can be released in a thread or async loop configuration.
+- Prefer the latest C++ standard over Boost.
+- Prefer OpenMP over complex performance gain for the sake of code simplicity.
+- Readability matters
+- Build reproducibility matters.
+- Don't forget C++ is a high-level language and is portable.
+- `doctest` is our choice of testing framework.
 
 # Rust-specific
 
@@ -135,7 +146,7 @@ unwrap_or, etc.) instead of pattern matching with if let or match when possible.
 # Commit
 
 - Use colon-styled gitmoji commit message. All messages are written in EN-US.
-- Run tests must be run against built artifact with `pytest`, so we can check if dev-time dependencies are included or
+- Run tests must be run against the built artifact with `pytest`, so we can check if dev-time dependencies are included or
   not. For example, running `uv sync && uv run pytest` will include all development dependencies such as typing
   libraries.
 - If installing dependencies fails (for example, due to network issues) or `pytest` is unavailable, note the failure in
@@ -143,4 +154,4 @@ unwrap_or, etc.) instead of pattern matching with if let or match when possible.
 
 # Branch naming
 
-Only use succinct change name, do not include `/`.
+Only use a succinct change name, do not include `/`.
