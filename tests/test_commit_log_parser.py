@@ -9,7 +9,6 @@ from pygit2 import (
     Repository,
     GitError,
     Signature,
-    GIT_SORT_TOPOLOGICAL,
     Oid,
 )
 from pygit2.enums import ObjectType
@@ -51,9 +50,8 @@ def random_file_commit(
     repo_dir: str, gitmoji_no_colon: str, parents: list | None = None
 ) -> Oid:
     new_f = Path(repo_dir) / str(uuid4())
-    new_f.write_text(str(uuid4))
     repo = Repository(repo_dir)
-    new_f.write_text(str(uuid4))
+    new_f.write_text(str(uuid4()))
     repo.index.add_all()
     if parents is None:
         parents = [repo.head.target]
@@ -100,10 +98,11 @@ def test_get_commit_logs(second_release_dir):
     head_tag = "v0.2.0"
     tail_tag = "v0.1.0"
 
-    rev_walk = repo.walk(
-        repo.references.get(f"refs/tags/{head_tag}").target, GIT_SORT_TOPOLOGICAL
-    )
-    rev_walk.hide(repo.references.get(f"refs/tags/{tail_tag}").target)
+    head_ref = repo.references.get(f"refs/tags/{head_tag}")
+    tail_ref = repo.references.get(f"refs/tags/{tail_tag}")
+    assert head_ref is not None and tail_ref is not None
+    rev_walk = repo.walk(head_ref.target)
+    rev_walk.hide(tail_ref.target)
     for commit in rev_walk:
         print(commit.message)
 

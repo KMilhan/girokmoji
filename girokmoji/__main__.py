@@ -28,6 +28,29 @@ def main() -> None:
         default=None,
     )
     generate.add_argument(
+        "--range",
+        "--range-mode",
+        dest="range_mode",
+        choices=["auto", "direct", "common-base"],
+        default="auto",
+        help="Commit range mode: auto (default), direct, common-base",
+    )
+    generate.add_argument(
+        "--strict-ancestor",
+        action="store_true",
+        help="Require tail to be an ancestor of head",
+    )
+    generate.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress informational notices on stderr",
+    )
+    generate.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print verbose notices to stderr",
+    )
+    generate.add_argument(
         "--github-payload",
         action="store_true",
         help="Output GitHub Release payload JSON instead of markdown",
@@ -56,6 +79,29 @@ def main() -> None:
         action="store_true",
         help="Output GitHub Release payload JSON instead of markdown",
     )
+    release.add_argument(
+        "--range",
+        "--range-mode",
+        dest="range_mode",
+        choices=["auto", "direct", "common-base"],
+        default="auto",
+        help="Commit range mode: auto (default), direct, common-base",
+    )
+    release.add_argument(
+        "--strict-ancestor",
+        action="store_true",
+        help="Require tail to be an ancestor of head",
+    )
+    release.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress informational notices on stderr",
+    )
+    release.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print verbose notices to stderr",
+    )
     parser.add_argument(
         "--version",
         action="version",
@@ -67,12 +113,28 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "release":
-        note = auto_release(
-            args.project_name,
+        # Preserve backward-compatibility for tests monkeypatching auto_release
+        release_kwargs = dict(
             repo_dir=args.repo_dir,
             bump=args.bump,
             release_date=args.release_date,
             github_payload=args.github_payload,
+        )
+        if (
+            args.range_mode != "auto"
+            or args.strict_ancestor
+            or args.quiet
+            or args.verbose
+        ):
+            release_kwargs.update(
+                range_mode=args.range_mode,
+                strict_ancestor=args.strict_ancestor,
+                quiet=args.quiet,
+                verbose=args.verbose,
+            )
+        note = auto_release(
+            args.project_name,
+            **release_kwargs,
         )
         print(note, file=sys.stdout)
     else:
@@ -84,6 +146,10 @@ def main() -> None:
                 tail_tag=args.tail_tag,
                 head_tag=args.head_tag,
                 version=args.version,
+                range_mode=args.range_mode,
+                strict_ancestor=args.strict_ancestor,
+                quiet=args.quiet,
+                verbose=args.verbose,
             )
             print(payload, file=sys.stdout)
         else:
@@ -94,6 +160,10 @@ def main() -> None:
                 tail_tag=args.tail_tag,
                 head_tag=args.head_tag,
                 version=args.version,
+                range_mode=args.range_mode,
+                strict_ancestor=args.strict_ancestor,
+                quiet=args.quiet,
+                verbose=args.verbose,
             )
             print(changelog, file=sys.stdout)
 

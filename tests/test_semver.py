@@ -56,7 +56,7 @@ def test_auto_release_with_semver(tmp_path: Path):
     repo.create_tag("v1.0.0", commit1, ObjectType.COMMIT, sig, "t1")
     f.write_text("b")
     repo.index.add_all()
-    commit2 = repo.create_commit(
+    repo.create_commit(
         "HEAD",
         sig,
         sig,
@@ -107,4 +107,3 @@ def test_auto_release_without_user_config(tmp_path: Path):
     tags = [r for r in repo.references if r.startswith("refs/tags/")]
     assert "refs/tags/v1.0.1" in tags
     assert "proj" in note
-

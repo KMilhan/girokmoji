@@ -8,9 +8,10 @@ from girokmoji import changelog
 
 
 class FakeCommit:
-    def __init__(self, message: str, commit_id: str = "deadbeef"):
-        self.message = message
-        self.raw_message = message.encode()
+    def __init__(self, message: str | None, commit_id: str = "deadbeef"):
+        self.message: str | None = message
+        _m = message or ""
+        self.raw_message = _m.encode()
         self.message_encoding = "utf-8"
         self.id = commit_id
 
