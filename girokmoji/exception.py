@@ -15,8 +15,4 @@ class NoSuchTagFoundError(IndexError):
 
 
 class NotAncestorError(ValueError):
-    """Tail is not an ancestor of head while strict-ancestor is required."""
-
-
-class NotAncestorError(ValueError):
     """Tail is not an ancestor of head while strict-ancestor is set."""

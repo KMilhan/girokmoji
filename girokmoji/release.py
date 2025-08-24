@@ -48,7 +48,7 @@ def auto_release(
     # Determine last reachable SemVer tag from HEAD
     lr = last_reachable_semver_tag(repo, head_commit)
     if lr is not None:
-        last_tag_name, last_reachable_version = lr[0], lr[1]
+        last_reachable_version = lr[1]
         # Normalize last_tag to have leading 'v'
         last_tag = f"v{last_reachable_version}"
     else:
@@ -63,7 +63,9 @@ def auto_release(
     if version_floor_scope not in {"global", "reachable"}:
         raise ValueError(f"Unsupported version_floor_scope: {version_floor_scope}")
     base_for_bump = (
-        global_max_version if version_floor_scope == "global" and global_max_version > last_reachable_version
+        global_max_version
+        if version_floor_scope == "global"
+        and global_max_version > last_reachable_version
         else last_reachable_version
     )
 
