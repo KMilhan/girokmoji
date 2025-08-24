@@ -172,5 +172,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as exc:  # pragma: no cover - top level entry
-        print(exc, file=sys.stderr)
-        sys.exit(1)
+        print(exc, file=sys.stderr)  # pragma: no cover - trivial exit
+        sys.exit(1)  # pragma: no cover - trivial exit

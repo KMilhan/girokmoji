@@ -220,6 +220,43 @@ uv run pytest
 See [multiline commit test](docs/multiline_commit_test.md) for multi-line commit examples and how commits are grouped in
 release notes.
 
+### Mutation testing
+
+We use mutmut for mutation testing. For stability, subprocess-based CLI/E2E tests are excluded during mutation runs via pytest markers:
+
+- Markers:
+  - `@pytest.mark.cli` for tests that invoke the CLI in a separate Python process.
+  - Module-level `pytestmark = pytest.mark.e2e` for end-to-end tests.
+- Runner filter (configured in `pyproject.toml`):
+  - `pytest -q -m 'not e2e and not cli'`
+  - `tests_dir = ["tests"]` so all tests are discovered but filtered by markers.
+
+Commands:
+
+```bash
+# run the full test suite normally (includes cli/e2e)
+uv run pytest -q
+
+# run mutation tests (excludes cli/e2e via marker filter)
+uv run mutmut run
+
+# show surviving mutants
+uv run mutmut results
+```
+
+Make targets are also available:
+
+```bash
+make mutation
+make mutation-results
+```
+
+Notes:
+
+- Regular pytest remains unchanged and continues to run the full suite, including CLI/E2E.
+- Mutation runs intentionally skip CLI/E2E to avoid subprocess-related instability during mutmut’s stats/listing phase.
+- If you need to experiment with including CLI/E2E in mutation, adjust the runner filter in `pyproject.toml` temporarily.
+
 ## Continuous Integration
 
 A typical pipeline installs `uv`, syncs dependencies and runs girokmoji via `uvx`:

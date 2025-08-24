@@ -13,13 +13,13 @@ def _resolve_to_commit(repo: Repository, name: str) -> Commit:
     """Resolve a reference, tag name, or hex OID to a Commit.
 
     Tries in order:
-    - Exact ref name (when name contains '/'), e.g., 'refs/tags/v1'
+    - Exact ref name (when name starts with 'refs/'), e.g., 'refs/tags/v1'
     - Tag under refs/tags/<name>
     - Revision parse via `revparse_single` (accepts tag names, shas, etc.)
     """
     obj = None
     ref = None
-    if "/" in name:
+    if name.startswith("refs/"):
         ref = repo.references.get(name)
     else:
         ref = repo.references.get(f"refs/tags/{name}")

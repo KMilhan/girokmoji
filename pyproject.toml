@@ -32,6 +32,7 @@ dev = [
     "coverage>=7.8.0",
     "pyright>=1.1.393",
     "pytest>=8.3.4",
+    "mutmut>=3.3.1",
     "ruff>=0.9.5",
 ]
 
@@ -47,3 +48,13 @@ source = "uv-dynamic-versioning"
 
 [tool.uv-dynamic-versioning]
 fallback-version = "0.0.0"
+
+[tool.mutmut]
+# Use pytest as the test runner
+runner = "pytest -q -m 'not e2e and not cli'"
+# Only mutate our package code
+paths_to_mutate = ["girokmoji"]
+# Tests location and filter to avoid fragile CLI version check under mutation stats collection
+tests_dir = ["tests"]
+# Optionally use coverage data to guide mutations
+use_coverage = true

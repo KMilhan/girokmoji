@@ -55,7 +55,7 @@ def sep_gitmoji_msg_title(msg: str, *, strict: bool = False) -> tuple[str, str]:
     msg = msg.split("\n")[0]
     for gitmoji in by_gitmoji():
         if msg.startswith(gitmoji):
-            return gitmoji, msg.removeprefix(gitmoji).strip()
+            return gitmoji, msg.removeprefix(gitmoji).strip(" ")
 
     if not strict:
         return "", msg.split("\n")[0]
@@ -88,7 +88,7 @@ def gen_markdown(
     release_date: str,
     change: dict[CATEGORY, list[CommitLike]],
 ):
-    changelog_markdown = ""
+    parts: list[str] = []
 
     separator = SEPARATOR().markdown
     head_md = HEAD(
@@ -101,12 +101,11 @@ _(And sometimes a little confusing.)_
         release_date=release_date,
     ).markdown
 
-    changelog_markdown += head_md
-    changelog_markdown += separator
+    parts.append(head_md)
+    parts.append(separator)
 
     # Iterate categories in a deterministic, user-facing priority order
     for cat in category_order:
-        category_md = ""
         subcats: dict[tuple[str, str], list[tuple[str, str]]] = {}
         for commit in change[cat]:
             gitmoji, title = sep_gitmoji_msg_title(commit_message(commit))
@@ -121,24 +120,26 @@ _(And sometimes a little confusing.)_
             key = (catmoji.emoji, catmoji.description)
             subcats.setdefault(key, []).append((title, str(commit.id)))
 
-        for (emoji, description), items in subcats.items():
-            header = ENTRY_GROUP_HEADER(
-                emoji=emoji,
-                gitmoji_description=description,
-            ).markdown
-            category_md += header
-            for title, commit_hash in items:
-                item = ENTRY_SUBITEM(
-                    commit_description=title,
-                    commit_hash=commit_hash,
+        if subcats:
+            category_parts: list[str] = []
+            for (emoji, description), items in subcats.items():
+                header = ENTRY_GROUP_HEADER(
+                    emoji=emoji,
+                    gitmoji_description=description,
                 ).markdown
-                category_md += item
-        if category_md:
-            changelog_markdown += CATEGORY_SECTION(cat, CATEGORY_SUBTEXTS[cat]).markdown
-            changelog_markdown += category_md
-            changelog_markdown += separator
+                category_parts.append(header)
+                for title, commit_hash in items:
+                    item = ENTRY_SUBITEM(
+                        commit_description=title,
+                        commit_hash=commit_hash,
+                    ).markdown
+                    category_parts.append(item)
 
-    return changelog_markdown
+            parts.append(CATEGORY_SECTION(cat, CATEGORY_SUBTEXTS[cat]).markdown)
+            parts.append("".join(category_parts))
+            parts.append(separator)
+
+    return "".join(parts)
 
 
 def change_log(
