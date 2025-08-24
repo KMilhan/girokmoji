@@ -1,5 +1,7 @@
 # Girokmoji
 
+![Mutation Survivability](https://img.shields.io/badge/Mutation%20Survivability-26%25-brightgreen)
+
 **Automatic changelog generator with built-in SemVer 2.0 tagging.**
 
 Turn your Gitmoji commits into release notes and version bumps. Girokmoji relies solely on `pygit2` and runs anywhere
