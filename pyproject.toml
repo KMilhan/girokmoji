@@ -55,6 +55,6 @@ runner = "pytest -q -m 'not e2e and not cli'"
 # Only mutate our package code
 paths_to_mutate = ["girokmoji"]
 # Tests location and filter to avoid fragile CLI version check under mutation stats collection
-tests_dir = ["tests"]
+tests_dir = ["tests", "--ignore=tests/test_cli.py"]
 # Optionally use coverage data to guide mutations
 use_coverage = true

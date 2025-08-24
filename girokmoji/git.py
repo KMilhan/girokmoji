@@ -2,8 +2,7 @@ from pathlib import Path
 from typing import Iterable
 import sys
 from pygit2 import Commit, Repository, discover_repository
-from pygit2.enums import ObjectType
-from pygit2 import GIT_SORT_TOPOLOGICAL, GIT_SORT_TIME
+from pygit2.enums import ObjectType, SortMode
 
 from girokmoji.exception import NoSuchTagFoundError, NotAncestorError
 from girokmoji.semver import SemVer
@@ -66,9 +65,7 @@ def get_tag_to_tag_commits(
     if range_mode == "auto":
         is_desc = repo.descendant_of(head_commit.id, tail_commit.id)
         if strict_ancestor and not is_desc:
-            raise NotAncestorError(
-                f"{tail_tag} is not an ancestor of {head_tag}"
-            )
+            raise NotAncestorError(f"{tail_tag} is not an ancestor of {head_tag}")
         if is_desc:
             effective_mode = "direct"
             if verbose and not quiet:
@@ -98,15 +95,13 @@ def get_tag_to_tag_commits(
     elif strict_ancestor:
         # Respect strict check even for explicit mode selections
         if not repo.descendant_of(head_commit.id, tail_commit.id):
-            raise NotAncestorError(
-                f"{tail_tag} is not an ancestor of {head_tag}"
-            )
+            raise NotAncestorError(f"{tail_tag} is not an ancestor of {head_tag}")
 
     # Prepare walker
     rev_walk = repo.walk(head_commit.id)
     # Default sorting if unspecified
     if sorting is None:
-        sorting = int(GIT_SORT_TOPOLOGICAL) | int(GIT_SORT_TIME)
+        sorting = int(SortMode.TOPOLOGICAL) | int(SortMode.TIME)
     sort_fn = getattr(rev_walk, "sorting", None)
     if callable(sort_fn):
         sort_fn(sorting)
