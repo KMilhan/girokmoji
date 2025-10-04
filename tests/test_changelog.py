@@ -57,3 +57,76 @@ def test_structured_and_markdown(monkeypatch):
         changelog.github_release_payload("proj", "2024-01-01", Path("."), "v0", "v1")
     )
     assert payload["tag_name"] == "v1"
+
+
+def test_get_category_no_fallback():
+    msg = "Text with :bug: inside"
+    with pytest.raises(changelog.NoGitmojiInMessageError):
+        changelog.get_category(msg, fallback_to_includes=False)
+    assert (
+        changelog.get_category(msg, fallback_to_includes=True)
+        == catgitmoji.by_code()[":bug:"].category
+    )
+
+
+def test_gen_markdown_skips_unknown_and_gitmojiless():
+    commits = [
+        FakeCommit(":sparkles: ok", "c1"),
+        FakeCommit(":nonexistent: nope", "c2"),
+        FakeCommit("just text", "c3"),
+    ]
+    structured = changelog.structured_changelog(commits)
+    md = changelog.gen_markdown("proj", "v1", "2024-01-01", structured)
+    assert "ok" in md
+    assert "nope" not in md
+    assert "just text" not in md
+
+
+def test_change_log_non_default_options(monkeypatch):
+    commits = [FakeCommit(":bug: fix1")]
+    captured: dict[str, object] = {}
+
+    def fake_get_tag_to_tag_commits(repo_dir, tail_tag, head_tag, **kwargs):
+        captured.update(kwargs)
+        return commits
+
+    monkeypatch.setattr(
+        changelog, "get_tag_to_tag_commits", fake_get_tag_to_tag_commits
+    )
+
+    changelog.change_log(
+        "proj",
+        "2024-01-01",
+        Path("."),
+        "v0",
+        "v1",
+        range_mode="direct",
+        strict_ancestor=True,
+        quiet=True,
+        verbose=True,
+        sorting=1,
+    )
+    assert captured == {
+        "range_mode": "direct",
+        "strict_ancestor": True,
+        "quiet": True,
+        "verbose": True,
+        "sorting": 1,
+    }
+
+
+def test_github_release_payload_flags(monkeypatch):
+    monkeypatch.setattr(changelog, "change_log", lambda **kwargs: "log")
+    payload = json.loads(
+        changelog.github_release_payload(
+            "proj",
+            "2024-01-01",
+            Path("."),
+            "v0",
+            "v1",
+            draft=True,
+            prerelease=True,
+        )
+    )
+    assert payload["draft"] is True
+    assert payload["prerelease"] is True

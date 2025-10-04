@@ -39,6 +39,12 @@ def test_bump_logic():
     assert str(v.bump("major")) == "1.0.0"
 
 
+def test_bump_invalid_part():
+    v = SemVer.parse("1.2.3")
+    with pytest.raises(ValueError):
+        v.bump("build")
+
+
 def test_auto_release_with_semver(tmp_path: Path):
     repo = init_repository(tmp_path)
     sig = Signature("t", "t@example.com")
