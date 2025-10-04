@@ -77,3 +77,86 @@ def test_github_payload_branch(tmp_path: Path):
         github_payload=True,
     )
     assert '"tag_name": "v0.1.1"' in payload
+
+
+def _setup_unreachable_tag_repo(tmp_path: Path):
+    repo, sig, f, commit = _setup_repo(tmp_path)
+    f.write_text("b")
+    repo.index.add_all()
+    other_commit = repo.create_commit(
+        "refs/heads/other",
+        sig,
+        sig,
+        ":sparkles: other",
+        repo.index.write_tree(),
+        [commit],
+    )
+    repo.create_tag("v0.1.1", other_commit, ObjectType.COMMIT, sig, "t2")
+    f.write_text("c")
+    repo.index.add_all()
+    head_commit = repo.create_commit(
+        "HEAD",
+        sig,
+        sig,
+        ":bug: fix",
+        repo.index.write_tree(),
+        [commit],
+    )
+    return repo, sig, f, commit, other_commit, head_commit
+
+
+def test_on_tag_exists_skip(tmp_path: Path):
+    repo, sig, f, commit, other_commit, head_commit = _setup_unreachable_tag_repo(
+        tmp_path
+    )
+    auto_release(
+        "proj",
+        repo_dir=tmp_path,
+        bump="patch",
+        on_tag_exists="skip",
+        version_floor_scope="reachable",
+    )
+    ref = repo.lookup_reference("refs/tags/v0.1.1")
+    assert repo[ref.target].peel(ObjectType.COMMIT).id == other_commit
+
+
+def test_on_tag_exists_overwrite(tmp_path: Path):
+    repo, sig, f, commit, other_commit, head_commit = _setup_unreachable_tag_repo(
+        tmp_path
+    )
+    auto_release(
+        "proj",
+        repo_dir=tmp_path,
+        bump="patch",
+        on_tag_exists="overwrite",
+        version_floor_scope="reachable",
+    )
+    ref = repo.lookup_reference("refs/tags/v0.1.1")
+    assert repo[ref.target].peel(ObjectType.COMMIT).id == head_commit
+
+
+def test_auto_release_uses_global_max(tmp_path: Path):
+    repo, sig, f, commit = _setup_repo(tmp_path)
+    f.write_text("b")
+    repo.index.add_all()
+    other_commit = repo.create_commit(
+        "refs/heads/other",
+        sig,
+        sig,
+        ":sparkles: other",
+        repo.index.write_tree(),
+        [commit],
+    )
+    repo.create_tag("v0.2.0", other_commit, ObjectType.COMMIT, sig, "t2")
+    f.write_text("c")
+    repo.index.add_all()
+    repo.create_commit(
+        "HEAD",
+        sig,
+        sig,
+        ":bug: fix",
+        repo.index.write_tree(),
+        [commit],
+    )
+    note = auto_release("proj", repo_dir=tmp_path, bump="patch")
+    assert "v0.2.1" in note

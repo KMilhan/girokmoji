@@ -142,7 +142,7 @@ def iter_semver_tags(repo: Repository) -> Iterable[tuple[str, SemVer, Commit]]:
         if not refname.startswith("refs/tags/"):
             continue
         tag_name = refname.rsplit("/", 1)[-1]
-        text = tag_name[1:] if tag_name.startswith("v") else tag_name
+        text = tag_name[1:] if tag_name[:1].lower() == "v" else tag_name
         try:
             ver = SemVer.parse(text)
         except ValueError:
