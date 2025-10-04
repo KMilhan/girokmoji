@@ -82,3 +82,22 @@ _(And sometimes a little confusing.)_
 - **🚸 Improve user experience / usability.**: [*touches on markdown generation*](../../commit/895076de2fab197032e3f115852e374d87af0bc9)
 
 ---
+
+## How This Was Generated
+
+You can generate a similar changelog with the CLI. Examples:
+
+```bash
+# Basic: between two tags in the current repo
+girokmoji MyProject 2025-02-10 . v0.5.2 v0.5.3 > release_note.md
+
+# Use auto range mode (default):
+# - direct when history is linear
+# - common-base when tags are on different lines (e.g., hotfix vs latest)
+girokmoji MyProject 2025-02-10 . v0.5.2-hotfix v0.5.3 --range auto
+
+# Enforce linear history and fail if diverged
+girokmoji MyProject 2025-02-10 . v0.5.2 v0.5.3 --strict-ancestor
+```
+
+Tip: Notices about auto-detected ranges are printed to stderr; the markdown is printed to stdout.

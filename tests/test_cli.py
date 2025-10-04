@@ -2,9 +2,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 import girokmoji
 
 
+@pytest.mark.cli
 def test_cli_version():
     result = subprocess.run(
         [sys.executable, '-m', 'girokmoji', '--version'],

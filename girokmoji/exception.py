@@ -12,3 +12,7 @@ class NoSuchGitmojiSupportedError(ValueError):
 
 class NoSuchTagFoundError(IndexError):
     """Unexpected tag name."""
+
+
+class NotAncestorError(ValueError):
+    """Tail is not an ancestor of head while strict-ancestor is set."""

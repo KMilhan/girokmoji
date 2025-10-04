@@ -1,5 +1,7 @@
 # Girokmoji
 
+![Mutation Survivability](https://img.shields.io/badge/Mutation%20Survivability-26%25-brightgreen)
+
 **Automatic changelog generator with built-in SemVer 2.0 tagging.**
 
 Turn your Gitmoji commits into release notes and version bumps. Girokmoji relies solely on `pygit2` and runs anywhere
@@ -39,6 +41,26 @@ uvx --from "girokmoji@latest" girokmoji release YOU_PROJECT_NAME --bump patch --
 ```bash
 uvx --from "girokmoji@latest" girokmoji YOUR_PROJECT_NAME 2025-02-10 your_project_repo_dir v0.1.0 v0.5.2 > release_note.md
 ```
+
+You can control how the commit range is determined with `--range`:
+
+```bash
+# Auto (default): direct when linear, common-base when diverged
+girokmoji YOUR_PROJECT_NAME 2025-02-10 . v1.2.3 v1.3.0 --range auto
+
+# Force raw tail..head range
+girokmoji YOUR_PROJECT_NAME 2025-02-10 . v1.2.3 v1.3.0 --range direct
+
+# Force merge-base..head (recommended for hotfix vs latest on different lines)
+girokmoji YOUR_PROJECT_NAME 2025-02-10 . v1.2.3-hotfix v1.3.0 --range common-base
+
+# Require linear history and fail if not
+girokmoji YOUR_PROJECT_NAME 2025-02-10 . v1.2.3 v1.3.0 --strict-ancestor
+```
+
+Notes:
+
+- Informational notices about range auto-detection (e.g., switching to common-base, or head-only fallback) are printed to stderr. The generated changelog is written to stdout, so you can safely redirect stdout to a file without capturing notices.
 
 ### Go With Classic Way
 
@@ -111,6 +133,71 @@ one go:
 girokmoji release YOUR_PROJECT_NAME --bump patch --repo-dir . > release.md
 ```
 
+The `release` command also accepts range-related flags which apply to the generated diff between the last tag and the new tag:
+
+```bash
+# Default auto behavior (linear histories use direct)
+girokmoji release YOUR_PROJECT_NAME --bump patch --repo-dir . --range auto
+
+# Enforce linear history if desired
+girokmoji release YOUR_PROJECT_NAME --bump minor --repo-dir . --strict-ancestor
+
+# Quiet or verbose notices
+girokmoji release YOUR_PROJECT_NAME --bump patch --repo-dir . --quiet
+girokmoji release YOUR_PROJECT_NAME --bump patch --repo-dir . --verbose
+```
+
+### Tag selection and hotpatch handling
+
+By default, girokmoji determines the previous tag (tail) for generating release notes and bumping versions using only tags that are reachable from the current HEAD.
+
+- Tail tag selection:
+  - Only tags whose target commit is an ancestor of HEAD are considered.
+  - Among those, the largest SemVer tag is chosen.
+- Tag formats:
+  - Both with or without a leading "v" are accepted (e.g., v1.2.3 or 1.2.3).
+  - Both annotated and lightweight tags are supported.
+
+Hotpatch/global floor:
+
+- To avoid version regressions when a larger SemVer tag exists on another branch (e.g., a hotpatch), the bump baseline uses the maximum of:
+  - The last reachable SemVer from HEAD, and
+  - The global maximum SemVer tag across the repository.
+- Example: If HEAD’s reachable max is v1.2.3 but there is a v2.0.0 tag on a different branch, a patch bump will produce v2.0.1 by default.
+- Library usage (Python API) can opt out of this behavior with:
+  - auto_release(..., version_floor_scope="reachable") to base the bump only on the reachable tag.
+
+This change affects how the previous tag is chosen and how the new version is computed, while the commit range selection (auto/direct/common-base) continues to work as documented below.
+
+### Range Modes (commit selection)
+
+- `auto` (default):
+  - Uses `tail..head` when the tail is an ancestor of head (linear history).
+  - Otherwise uses `merge-base(tail, head)..head`.
+  - If there is no common base, shows commits reachable from `head` only.
+- `direct`: Always `tail..head`.
+- `common-base`: Always `merge-base(tail, head)..head` (falls back to head-only when no base).
+
+Flags and behavior:
+
+- `--range` / `--range-mode {auto,direct,common-base}`
+- `--strict-ancestor`: fail if refs diverge (tail is not ancestor of head)
+- `--quiet`: suppress informational notices on stderr
+- `--verbose`: print chosen mode and resolved SHAs to stderr
+
+Examples:
+
+```bash
+# Notes for a mainline release since the previous mainline tag
+girokmoji MyProj 2025-08-17 . v1.2.3 v1.3.0 --range auto
+
+# Notes comparing a hotfix tag and the latest tag on main
+girokmoji MyProj 2025-08-17 . v1.2.3-hotfix v1.3.0 --range auto
+
+# Enforce linear history in CI
+girokmoji MyProj 2025-08-17 . v1.2.3 v1.3.0 --strict-ancestor
+```
+
 ## Example
 
 For generated release note, go [EXAMPLE.md](./EXAMPLE.md)
@@ -134,6 +221,43 @@ uv run pytest
 
 See [multiline commit test](docs/multiline_commit_test.md) for multi-line commit examples and how commits are grouped in
 release notes.
+
+### Mutation testing
+
+We use mutmut for mutation testing. For stability, subprocess-based CLI/E2E tests are excluded during mutation runs via pytest markers:
+
+- Markers:
+  - `@pytest.mark.cli` for tests that invoke the CLI in a separate Python process.
+  - Module-level `pytestmark = pytest.mark.e2e` for end-to-end tests.
+- Runner filter (configured in `pyproject.toml`):
+  - `pytest -q -m 'not e2e and not cli'`
+  - `tests_dir = ["tests"]` so all tests are discovered but filtered by markers.
+
+Commands:
+
+```bash
+# run the full test suite normally (includes cli/e2e)
+uv run pytest -q
+
+# run mutation tests (excludes cli/e2e via marker filter)
+uv run mutmut run
+
+# show surviving mutants
+uv run mutmut results
+```
+
+Make targets are also available:
+
+```bash
+make mutation
+make mutation-results
+```
+
+Notes:
+
+- Regular pytest remains unchanged and continues to run the full suite, including CLI/E2E.
+- Mutation runs intentionally skip CLI/E2E to avoid subprocess-related instability during mutmut’s stats/listing phase.
+- If you need to experiment with including CLI/E2E in mutation, adjust the runner filter in `pyproject.toml` temporarily.
 
 ## Continuous Integration
 

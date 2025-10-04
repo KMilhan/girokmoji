@@ -1,8 +1,6 @@
 import json
 from pathlib import Path
-from typing import Iterable
-
-from pygit2 import Commit
+from typing import Iterable, Protocol, runtime_checkable, Any
 
 from girokmoji.catgitmoji import by_gitmoji, any_to_catmoji
 from girokmoji.const import CATEGORY, category_order, CATEGORY_SUBTEXTS
@@ -16,7 +14,22 @@ from girokmoji.template import ENTRY_GROUP_HEADER, ENTRY_SUBITEM
 from girokmoji.template import SEPARATOR, HEAD, CATEGORY_SECTION
 
 
-def commit_message(commit: Commit) -> str:
+@runtime_checkable
+class CommitLike(Protocol):
+    @property
+    def message(self) -> str | None: ...
+
+    @property
+    def raw_message(self) -> bytes: ...
+
+    @property
+    def message_encoding(self) -> str: ...
+
+    @property
+    def id(self) -> Any: ...
+
+
+def commit_message(commit: CommitLike) -> str:
     if isinstance(commit.message, str):
         return commit.message
 
@@ -24,22 +37,25 @@ def commit_message(commit: Commit) -> str:
 
 
 def get_category(msg: str, *, fallback_to_includes: bool = True) -> CATEGORY:
-    for gitmoji in by_gitmoji():
+    mapping = by_gitmoji()
+    for gitmoji, info in mapping.items():
+        cat: CATEGORY = info.category
         if msg.startswith(gitmoji):
-            return by_gitmoji()[gitmoji].category
+            return cat
     if fallback_to_includes:
-        for gitmoji in by_gitmoji():
+        for gitmoji, info in mapping.items():
+            cat: CATEGORY = info.category
             if gitmoji in msg:
-                return by_gitmoji()[gitmoji].category
+                return cat
     raise NoGitmojiInMessageError("No Gitmoji found in the message")
 
 
 def sep_gitmoji_msg_title(msg: str, *, strict: bool = False) -> tuple[str, str]:
     """Return gitmoji and message from commit message. Strict mode raises exception MessageDoesNotStartWithGitmojiError"""
     msg = msg.split("\n")[0]
-    for gitmoji in by_gitmoji().keys():
+    for gitmoji in by_gitmoji():
         if msg.startswith(gitmoji):
-            return gitmoji, msg.removeprefix(gitmoji).strip()
+            return gitmoji, msg.removeprefix(gitmoji).strip(" ")
 
     if not strict:
         return "", msg.split("\n")[0]
@@ -47,9 +63,11 @@ def sep_gitmoji_msg_title(msg: str, *, strict: bool = False) -> tuple[str, str]:
     raise MessageDoesNotStartWithGitmojiError
 
 
-def structured_changelog(commits: Iterable[Commit]) -> dict[CATEGORY, list[Commit]]:
+def structured_changelog(
+    commits: Iterable[CommitLike],
+) -> dict[CATEGORY, list[CommitLike]]:
     # prepare structured changelog with importance order
-    structured_changelog: dict[CATEGORY, list[Commit]] = {}
+    structured_changelog: dict[CATEGORY, list[CommitLike]] = {}
     for cat in category_order:
         structured_changelog[cat] = []
 
@@ -68,9 +86,9 @@ def gen_markdown(
     project_name: str,
     version: str,
     release_date: str,
-    change: dict[CATEGORY, list[Commit]],
+    change: dict[CATEGORY, list[CommitLike]],
 ):
-    changelog_markdown = ""
+    parts: list[str] = []
 
     separator = SEPARATOR().markdown
     head_md = HEAD(
@@ -83,11 +101,11 @@ _(And sometimes a little confusing.)_
         release_date=release_date,
     ).markdown
 
-    changelog_markdown += head_md
-    changelog_markdown += separator
+    parts.append(head_md)
+    parts.append(separator)
 
-    for cat in change:
-        category_md = ""
+    # Iterate categories in a deterministic, user-facing priority order
+    for cat in category_order:
         subcats: dict[tuple[str, str], list[tuple[str, str]]] = {}
         for commit in change[cat]:
             gitmoji, title = sep_gitmoji_msg_title(commit_message(commit))
@@ -102,24 +120,26 @@ _(And sometimes a little confusing.)_
             key = (catmoji.emoji, catmoji.description)
             subcats.setdefault(key, []).append((title, str(commit.id)))
 
-        for (emoji, description), items in subcats.items():
-            header = ENTRY_GROUP_HEADER(
-                emoji=emoji,
-                gitmoji_description=description,
-            ).markdown
-            category_md += header
-            for title, commit_hash in items:
-                item = ENTRY_SUBITEM(
-                    commit_description=title,
-                    commit_hash=commit_hash,
+        if subcats:
+            category_parts: list[str] = []
+            for (emoji, description), items in subcats.items():
+                header = ENTRY_GROUP_HEADER(
+                    emoji=emoji,
+                    gitmoji_description=description,
                 ).markdown
-                category_md += item
-        if category_md:
-            changelog_markdown += CATEGORY_SECTION(cat, CATEGORY_SUBTEXTS[cat]).markdown
-            changelog_markdown += category_md
-            changelog_markdown += separator
+                category_parts.append(header)
+                for title, commit_hash in items:
+                    item = ENTRY_SUBITEM(
+                        commit_description=title,
+                        commit_hash=commit_hash,
+                    ).markdown
+                    category_parts.append(item)
 
-    return changelog_markdown
+            parts.append(CATEGORY_SECTION(cat, CATEGORY_SUBTEXTS[cat]).markdown)
+            parts.append("".join(category_parts))
+            parts.append(separator)
+
+    return "".join(parts)
 
 
 def change_log(
@@ -129,15 +149,43 @@ def change_log(
     tail_tag: str,
     head_tag: str,
     version: str | None = None,
+    *,
+    range_mode: str = "auto",
+    strict_ancestor: bool = False,
+    quiet: bool = False,
+    verbose: bool = False,
+    sorting: int | None = None,
 ) -> str:
     if version is None:
         version = head_tag
+
+    # Preserve backward-compat: only pass extra kwargs when they differ
+    # from defaults, so monkeypatched tests with simpler signatures work.
+    if (
+        range_mode == "auto"
+        and not strict_ancestor
+        and not quiet
+        and not verbose
+        and sorting is None
+    ):
+        commits = get_tag_to_tag_commits(repo_dir, tail_tag, head_tag)
+    else:
+        commits = get_tag_to_tag_commits(
+            repo_dir,
+            tail_tag,
+            head_tag,
+            range_mode=range_mode,
+            strict_ancestor=strict_ancestor,
+            quiet=quiet,
+            verbose=verbose,
+            sorting=sorting,
+        )
 
     return gen_markdown(
         project_name,
         version,
         release_date,
-        structured_changelog(get_tag_to_tag_commits(repo_dir, tail_tag, head_tag)),
+        structured_changelog(commits),
     ).strip()
 
 
@@ -151,6 +199,11 @@ def github_release_payload(
     *,
     draft: bool = False,
     prerelease: bool = False,
+    range_mode: str = "auto",
+    strict_ancestor: bool = False,
+    quiet: bool = False,
+    verbose: bool = False,
+    sorting: int | None = None,
 ) -> str:
     """Return GitHub release payload as JSON string."""
     changelog = change_log(
@@ -160,6 +213,11 @@ def github_release_payload(
         tail_tag=tail_tag,
         head_tag=head_tag,
         version=version,
+        range_mode=range_mode,
+        strict_ancestor=strict_ancestor,
+        quiet=quiet,
+        verbose=verbose,
+        sorting=sorting,
     )
     payload = {
         "tag_name": head_tag,
@@ -168,4 +226,5 @@ def github_release_payload(
         "draft": draft,
         "prerelease": prerelease,
     }
-    return json.dumps(payload)
+    # Preserve unicode characters (e.g., emoji) in output for readability
+    return json.dumps(payload, ensure_ascii=False)
