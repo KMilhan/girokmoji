@@ -55,7 +55,27 @@ girokmoji YOUR_PROJECT_NAME 2025-02-10 . v1.2.3-hotfix v1.3.0 --range common-bas
 
 # Require linear history and fail if not
 girokmoji YOUR_PROJECT_NAME 2025-02-10 . v1.2.3 v1.3.0 --strict-ancestor
+
+## Adopt repositories in one shot
+
+Use the `adopt` subcommand when you need an agent-friendly workflow. It clones
+(or reuses) a repo, fetches tags, runs the release flow, and emits structured
+text or JSON. The command defaults to `--dry-run`, so no tag or push happens
+unless you opt into `--apply`.
+
+```bash
+# Safe JSON dry-run (recommended)
+girokmoji adopt https://github.com/acme/api --json
+
+# Target a local checkout and keep the workspace
+girokmoji adopt . --keep-workdir --format text
+
+# Perform the tag/push after reviewing the output
+girokmoji adopt git@github.com:acme/api.git --apply --push-remote origin
 ```
+
+See [docs/adopt.md](docs/adopt.md) for the full quickstart, flag table, JSON
+contract, exit codes, and troubleshooting details aimed at coding agents.
 
 Notes:
 
