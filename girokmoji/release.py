@@ -3,8 +3,14 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
-from pygit2 import Repository, discover_repository, Signature, GitError
-from pygit2.enums import ObjectType
+from girokmoji.native.git2 import (
+    Commit,
+    GitError,
+    ObjectType,
+    Repository,
+    Signature,
+    discover_repository,
+)
 
 from .changelog import change_log, github_release_payload
 from .semver import SemVer
@@ -41,9 +47,18 @@ def auto_release(
     if release_date is None:
         release_date = date.today().isoformat()
 
-    repo = Repository(discover_repository(str(repo_dir)))
+    git_dir = discover_repository(str(repo_dir))
+    if git_dir is None:
+        raise ValueError(f"{repo_dir} is not a git repository")
+    repo = Repository(git_dir)
+    head_ref = repo.head
+    if head_ref is None or repo.head_is_unborn:
+        raise ValueError("Repository has no commits to release")
+    head_commit_obj = head_ref.peel(ObjectType.COMMIT)
+    if not isinstance(head_commit_obj, Commit):
+        raise ValueError("Repository head did not resolve to a commit")
     # Determine head commit as Commit object
-    head_commit = repo.head.peel(ObjectType.COMMIT)
+    head_commit = head_commit_obj
 
     # Determine last reachable SemVer tag from HEAD
     lr = last_reachable_semver_tag(repo, head_commit)
@@ -78,7 +93,7 @@ def auto_release(
         sig = None
     sig = sig or Signature("girokmoji", "release@girokmoji")
     try:
-        repo.create_tag(new_tag, repo.head.target, ObjectType.COMMIT, sig, new_tag)
+        repo.create_tag(new_tag, head_commit.id, ObjectType.COMMIT, sig, new_tag)
     except (GitError, ValueError) as e:
         if on_tag_exists == "skip":
             # Proceed without creating the tag again
@@ -90,7 +105,7 @@ def auto_release(
             except Exception:
                 # If deletion fails, re-raise original error
                 raise e
-            repo.create_tag(new_tag, repo.head.target, ObjectType.COMMIT, sig, new_tag)
+            repo.create_tag(new_tag, head_commit.id, ObjectType.COMMIT, sig, new_tag)
         else:
             # Default strict behavior
             raise

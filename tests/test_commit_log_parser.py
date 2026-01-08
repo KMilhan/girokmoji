@@ -4,14 +4,15 @@ from typing import Generator
 from uuid import uuid4
 
 import pytest
-from pygit2 import (
-    init_repository,
-    Repository,
+
+from girokmoji.native.git2 import (
     GitError,
-    Signature,
+    ObjectType,
     Oid,
+    Repository,
+    Signature,
+    init_repository,
 )
-from pygit2.enums import ObjectType
 
 person = Signature("milhan", "milhan@milhan.kim")
 
@@ -40,8 +41,16 @@ def initial_commit_dir(inited_dir) -> Generator[str, None, None]:
 @pytest.fixture(scope="function")
 def initial_release_dir(initial_commit_dir) -> Generator[str, None, None]:
     repo = Repository(initial_commit_dir)
+    head = repo.head
+    assert head is not None
+    target = head.resolve().target
+    assert target is not None
     repo.create_tag(
-        "v0.1.0", repo.head.resolve().target, ObjectType.COMMIT, person, "release1"
+        "v0.1.0",
+        target,
+        ObjectType.COMMIT,
+        person,
+        "release1",
     )
     yield initial_commit_dir
 
@@ -54,7 +63,11 @@ def random_file_commit(
     new_f.write_text(str(uuid4()))
     repo.index.add_all()
     if parents is None:
-        parents = [repo.head.target]
+        head = repo.head
+        assert head is not None
+        target = head.target
+        assert target is not None
+        parents = [target]
 
     return repo.create_commit(
         "HEAD",
@@ -70,8 +83,16 @@ def random_file_commit(
 def second_release_dir(initial_release_dir) -> Generator[str, None, None]:
     random_file_commit(initial_release_dir, "art")
     repo = Repository(initial_release_dir)
+    head = repo.head
+    assert head is not None
+    target = head.resolve().target
+    assert target is not None
     repo.create_tag(
-        "v0.2.0", repo.head.resolve().target, ObjectType.COMMIT, person, "release2"
+        "v0.2.0",
+        target,
+        ObjectType.COMMIT,
+        person,
+        "release2",
     )
     yield initial_release_dir
 
@@ -101,8 +122,11 @@ def test_get_commit_logs(second_release_dir):
     head_ref = repo.references.get(f"refs/tags/{head_tag}")
     tail_ref = repo.references.get(f"refs/tags/{tail_tag}")
     assert head_ref is not None and tail_ref is not None
-    rev_walk = repo.walk(head_ref.target)
-    rev_walk.hide(tail_ref.target)
+    head_target = head_ref.target
+    tail_target = tail_ref.target
+    assert head_target is not None and tail_target is not None
+    rev_walk = repo.walk(head_target)
+    rev_walk.hide(tail_target)
     for commit in rev_walk:
         print(commit.message)
 

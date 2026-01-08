@@ -1,8 +1,7 @@
 from pathlib import Path
 
 import pytest
-from pygit2 import init_repository, Signature
-from pygit2.enums import ObjectType
+from girokmoji.native.git2 import ObjectType, Signature, init_repository
 
 from girokmoji.semver import SemVer
 from girokmoji.release import auto_release

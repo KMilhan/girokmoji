@@ -1,8 +1,7 @@
 from pathlib import Path
 
 import pytest
-from pygit2 import Signature, init_repository
-from pygit2.enums import ObjectType
+from girokmoji.native.git2 import ObjectType, Signature, init_repository
 
 from girokmoji.release import auto_release
 
@@ -117,7 +116,9 @@ def test_on_tag_exists_skip(tmp_path: Path):
         version_floor_scope="reachable",
     )
     ref = repo.lookup_reference("refs/tags/v0.1.1")
-    assert repo[ref.target].peel(ObjectType.COMMIT).id == other_commit
+    target = ref.target
+    assert target is not None
+    assert repo[target].peel(ObjectType.COMMIT).id == other_commit
 
 
 def test_on_tag_exists_overwrite(tmp_path: Path):
@@ -132,7 +133,9 @@ def test_on_tag_exists_overwrite(tmp_path: Path):
         version_floor_scope="reachable",
     )
     ref = repo.lookup_reference("refs/tags/v0.1.1")
-    assert repo[ref.target].peel(ObjectType.COMMIT).id == head_commit
+    target = ref.target
+    assert target is not None
+    assert repo[target].peel(ObjectType.COMMIT).id == head_commit
 
 
 def test_auto_release_uses_global_max(tmp_path: Path):

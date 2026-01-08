@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import pytest
-from pygit2 import Signature, init_repository
-from pygit2.enums import ObjectType, SortMode
+
+from girokmoji.native.git2 import ObjectType, Signature, SortMode, init_repository
 
 from girokmoji.exception import NoSuchTagFoundError, NotAncestorError
 from girokmoji.git import (
@@ -566,7 +566,11 @@ def test_last_reachable_semver_tag_skips_unreachable(tmp_path):
         [base],
     )
     repo.create_tag("v2.0.0", other, ObjectType.COMMIT, person, "v2")
-    head = repo[repo.head.target].peel(ObjectType.COMMIT)
+    head_ref = repo.head
+    assert head_ref is not None
+    head_target = head_ref.target
+    assert head_target is not None
+    head = repo[head_target].peel(ObjectType.COMMIT)
     assert last_reachable_semver_tag(repo, head) == (
         "v1.0.0",
         SemVer.parse("1.0.0"),

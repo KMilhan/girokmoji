@@ -52,7 +52,8 @@ You have "pair-programmer" who you should code with.
 
 - Use `uv` for environments and commands.
 - Python 3.10+; build backend is `hatchling` (via `uv build`).
-- Requires `libgit2` for `pygit2` runtime, and only that.
+- Requires bundled `libgit2` for runtime plus `certifi` for CA bundles.
+- Native builds use Zig + CMake (libgit2/mbedtls/zlib submodules).
 ## Project Structure & Module Organization
 
 - `girokmoji/`: core library plus CLI entry `__main__.py`; functional modules include `semver.py`, `changelog.py`, `git.py`, `template.py`, and `const.py`.
@@ -93,7 +94,7 @@ You have "pair-programmer" who you should code with.
 
 ## Security & Configuration Tips
 
-- Uses `pygit2` (libgit2). Ensure tags/history are available; in CI use checkout with `fetch-depth: 0`.
+- Uses libgit2 directly. Ensure tags/history are available; in CI use checkout with `fetch-depth: 0`.
 - For release generation/tagging, run inside a git repo with reachable tags.
 - Never commit secrets; configuration happens through env vars or CLI args.
 

@@ -4,11 +4,10 @@
 
 **Automatic changelog generator with built-in SemVer 2.0 tagging.**
 
-Turn your Gitmoji commits into release notes and version bumps. Girokmoji relies solely on `pygit2` and runs anywhere
-`libgit2` is available.
+Turn your Gitmoji commits into release notes and version bumps. Girokmoji ships a bundled `libgit2`
+binary (built with mbedtls) so you do not need a system `git` executable.
 
-We use minimum dependencies. Currently, only pygit2, which requires no runtime
-`git` executable, good enough binary distributions, is used.
+We keep dependencies minimal: just the packaged `libgit2` runtime and `certifi` for CA bundles.
 
 ## Designed for General Use
 
@@ -107,6 +106,14 @@ already isolated environment:
 
 ```bash
 pip install girokmoji
+```
+
+#### Native build (development)
+
+To build the bundled libgit2 locally (required for running tests from source):
+
+```bash
+zig build
 ```
 
 ### Show version

@@ -12,6 +12,7 @@ _SEMVER_RE = re.compile(
     r"(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
 )
 
+
 @dataclass(frozen=True)
 class SemVer:
     """Semantic Version 2.0.0."""

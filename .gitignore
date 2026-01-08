@@ -2,3 +2,8 @@
 .idea
 dist
 *.egg-info
+/.zig-cache/
+/build/
+/girokmoji/native/lib/
+/girokmoji/native/include/girokmoji_native/
+/girokmoji/native/include/girokmoji_native.h

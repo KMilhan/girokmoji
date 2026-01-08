@@ -9,7 +9,7 @@ import girokmoji
 @pytest.mark.cli
 def test_cli_version():
     result = subprocess.run(
-        [sys.executable, '-m', 'girokmoji', '--version'],
+        [sys.executable, "-m", "girokmoji", "--version"],
         capture_output=True,
         text=True,
     )
@@ -26,6 +26,7 @@ def test_cli_release(monkeypatch):
 
     monkeypatch.setattr("girokmoji.release.auto_release", fake_auto_release)
     import girokmoji.__main__ as giromain
+
     monkeypatch.setattr(
         sys,
         "argv",

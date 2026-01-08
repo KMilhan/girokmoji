@@ -5,7 +5,7 @@ description = "Change log creator for gitmoji logs"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "pygit2<2",
+    "certifi>=2024.8.30",
 ]
 authors = [
     { name = "Kim Milhan", email = "kimmilhan@gmail.com" },
@@ -36,8 +36,46 @@ dev = [
     "ruff>=0.9.5",
 ]
 
+[tool.ruff]
+exclude = [
+    ".git",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    ".zig-cache",
+    "build",
+    "dist",
+    "vendor",
+]
+
 [tool.pyright]
 reportPrivateImportUsage = false
+exclude = [
+    ".git",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    ".zig-cache",
+    "build",
+    "dist",
+    "vendor",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "cli: tests that invoke the CLI in a subprocess",
+    "e2e: end-to-end tests that exercise the CLI against a real repo",
+]
+testpaths = ["tests"]
+norecursedirs = [
+    ".code",
+    ".zig-cache",
+    "__pycache__",
+    "build",
+    "docs",
+    "girokmoji/native",
+    "vendor",
+]
 
 [build-system]
 requires = ["hatchling", "uv-dynamic-versioning"]
@@ -48,6 +86,25 @@ source = "uv-dynamic-versioning"
 
 [tool.uv-dynamic-versioning]
 fallback-version = "0.0.0"
+
+[tool.hatch.build.targets.wheel]
+packages = ["girokmoji"]
+include = ["girokmoji/native/lib/*"]
+
+[tool.hatch.build.targets.wheel.hooks.custom]
+path = "hatch_build.py"
+optimize = "ReleaseFast"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "build.zig",
+    "hatch_build.py",
+    "girokmoji/**",
+    "scripts/**",
+    "vendor/libgit2/**",
+    "vendor/mbedtls/**",
+    "vendor/zlib/**",
+]
 
 [tool.mutmut]
 # Use pytest as the test runner

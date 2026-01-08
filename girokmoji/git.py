@@ -1,11 +1,23 @@
 from pathlib import Path
 from typing import Iterable
 import sys
-from pygit2 import Commit, Repository, discover_repository
-from pygit2.enums import ObjectType, SortMode
+from girokmoji.native.git2 import (
+    Commit,
+    ObjectType,
+    Repository,
+    SortMode,
+    discover_repository,
+)
 
 from girokmoji.exception import NoSuchTagFoundError, NotAncestorError
 from girokmoji.semver import SemVer
+
+
+def _open_repo(repo_dir: Path) -> Repository:
+    git_dir = discover_repository(str(repo_dir))
+    if git_dir is None:
+        raise ValueError(f"{repo_dir} is not a git repository")
+    return Repository(git_dir)
 
 
 def _resolve_to_commit(repo: Repository, name: str) -> Commit:
@@ -23,7 +35,9 @@ def _resolve_to_commit(repo: Repository, name: str) -> Commit:
     else:
         ref = repo.references.get(f"refs/tags/{name}")
     if ref is not None:
-        obj = repo[ref.target]
+        ref_target = ref.target
+        if ref_target is not None:
+            obj = repo[ref_target]
     else:
         try:
             obj = repo.revparse_single(name)
@@ -56,7 +70,7 @@ def get_tag_to_tag_commits(
     When strict_ancestor is True and head is not descendant of tail, raise
     NotAncestorError.
     """
-    repo = Repository(discover_repository(str(repo_dir)))
+    repo = _open_repo(repo_dir)
     head_commit = _resolve_to_commit(repo, head_tag)
     tail_commit = _resolve_to_commit(repo, tail_tag)
 
@@ -150,7 +164,10 @@ def iter_semver_tags(repo: Repository) -> Iterable[tuple[str, SemVer, Commit]]:
         ref = repo.references.get(refname)
         if ref is None:
             continue
-        obj = repo[ref.target]
+        ref_target = ref.target
+        if ref_target is None:
+            continue
+        obj = repo[ref_target]
         commit = obj.peel(ObjectType.COMMIT)
         yield (tag_name, ver, commit)
 
