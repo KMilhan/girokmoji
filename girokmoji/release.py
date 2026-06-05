@@ -94,7 +94,7 @@ def auto_release(
     sig = sig or Signature("girokmoji", "release@girokmoji")
     try:
         repo.create_tag(new_tag, head_commit.id, ObjectType.COMMIT, sig, new_tag)
-    except (GitError, ValueError) as e:
+    except (GitError, ValueError) as create_error:
         if on_tag_exists == "skip":
             # Proceed without creating the tag again
             pass
@@ -104,7 +104,7 @@ def auto_release(
                 repo.references.delete(f"refs/tags/{new_tag}")
             except Exception:
                 # If deletion fails, re-raise original error
-                raise e
+                raise create_error from None
             repo.create_tag(new_tag, head_commit.id, ObjectType.COMMIT, sig, new_tag)
         else:
             # Default strict behavior

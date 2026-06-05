@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -158,3 +159,73 @@ def test_run_adopt_handles_release_failure(monkeypatch, tmp_path: Path) -> None:
         run_adopt(options)
 
     assert excinfo.value.code == "RELEASE_FAILED"
+
+
+def test_run_adopt_keeps_temp_clone_when_requested(tmp_path: Path) -> None:
+    repo_dir = tmp_path / "origin"
+    repo_dir.mkdir()
+    _seed_repository(repo_dir)
+
+    options = AdoptOptions(
+        repo=repo_dir.as_uri(),
+        project_name="demo",
+        bump="patch",
+        ref=None,
+        range_mode="auto",
+        strict_ancestor=False,
+        quiet=False,
+        verbose=False,
+        dry_run=True,
+        workdir=None,
+        keep_workdir=True,
+        push_remote="origin",
+        depth=0,
+        changelog_out=None,
+    )
+
+    result = run_adopt(options)
+
+    try:
+        assert result.workdir.exists()
+        assert result.workdir_persisted is True
+    finally:
+        shutil.rmtree(result.workdir, ignore_errors=True)
+
+
+def test_run_adopt_cleans_temp_clone_after_release_failure(
+    monkeypatch, tmp_path: Path
+) -> None:
+    repo_dir = tmp_path / "origin"
+    repo_dir.mkdir()
+    _seed_repository(repo_dir)
+    cloned_workdirs: list[Path] = []
+
+    def _boom(*args, **kwargs):  # noqa: ANN001 - signature mirrors auto_release
+        cloned_workdirs.append(kwargs["repo_dir"])
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("girokmoji.adopt.auto_release", _boom)
+
+    options = AdoptOptions(
+        repo=repo_dir.as_uri(),
+        project_name="demo",
+        bump="patch",
+        ref=None,
+        range_mode="auto",
+        strict_ancestor=False,
+        quiet=False,
+        verbose=False,
+        dry_run=True,
+        workdir=None,
+        keep_workdir=False,
+        push_remote="origin",
+        depth=0,
+        changelog_out=None,
+    )
+
+    with pytest.raises(AdoptError) as excinfo:
+        run_adopt(options)
+
+    assert excinfo.value.code == "RELEASE_FAILED"
+    assert cloned_workdirs
+    assert not cloned_workdirs[0].exists()

@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 import shutil
 import tempfile
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
-from typing import Callable
 
 from girokmoji.native.git2 import (
     Commit,
@@ -103,108 +103,118 @@ def run_adopt(options: AdoptOptions) -> AdoptResult:
         raise AdoptError("INVALID_REPO", "--depth must be >= 0")
 
     start = perf_counter()
-    prep = _prepare_repository(options.repo, options.workdir, options.depth)
-    repo = prep.repo
+    prep = _prepare_repository(
+        options.repo,
+        options.workdir,
+        options.depth,
+        keep_workdir=options.keep_workdir,
+    )
+    try:
+        repo = prep.repo
 
-    if prep.uses_existing and _is_dirty(repo):
-        raise AdoptError(
-            "DIRTY_WORKDIR",
-            f"Repository at {prep.workdir} has uncommitted changes",
-            hint="Commit, stash, or use a fresh checkout before running adopt",
-        )
+        if prep.uses_existing and _is_dirty(repo):
+            raise AdoptError(
+                "DIRTY_WORKDIR",
+                f"Repository at {prep.workdir} has uncommitted changes",
+                hint="Commit, stash, or use a fresh checkout before running adopt",
+            )
 
-    if prep.remote_like:
-        _fetch_all_refs(repo, options.depth)
+        if prep.remote_like:
+            _fetch_all_refs(repo, options.depth)
 
-    if options.ref:
-        _checkout_ref(repo, options.ref)
-        active_ref = options.ref
-    else:
+        if options.ref:
+            _checkout_ref(repo, options.ref)
+            active_ref = options.ref
+        else:
+            head = repo.head
+            if head is None or repo.head_is_unborn:
+                raise AdoptError("INVALID_REPO", "Repository has no commits to adopt")
+            active_ref = head.shorthand or "HEAD"
+            repo.checkout_head(strategy=GIT_CHECKOUT_FORCE)
+
         head = repo.head
         if head is None or repo.head_is_unborn:
             raise AdoptError("INVALID_REPO", "Repository has no commits to adopt")
-        active_ref = head.shorthand or "HEAD"
-        repo.checkout_head(strategy=GIT_CHECKOUT_FORCE)
+        commit_obj = head.peel(ObjectType.COMMIT)
+        if not isinstance(commit_obj, Commit):
+            raise AdoptError("INVALID_REPO", "HEAD is not a commit")
+        commit = commit_obj
 
-    head = repo.head
-    if head is None or repo.head_is_unborn:
-        raise AdoptError("INVALID_REPO", "Repository has no commits to adopt")
-    commit_obj = head.peel(ObjectType.COMMIT)
-    if not isinstance(commit_obj, Commit):
-        raise AdoptError("INVALID_REPO", "HEAD is not a commit")
-    commit = commit_obj
-
-    previous_tag, new_version, new_tag = _compute_version(repo, commit, options.bump)
-
-    project_name = _infer_project_name(options.project_name, prep.workdir, options.repo)
-
-    try:
-        changelog = auto_release(
-            project_name,
-            repo_dir=prep.workdir,
-            bump=options.bump,
-            range_mode=options.range_mode,
-            strict_ancestor=options.strict_ancestor,
-            quiet=options.quiet,
-            verbose=options.verbose,
+        previous_tag, new_version, new_tag = _compute_version(
+            repo, commit, options.bump
         )
-    except Exception as exc:  # pragma: no cover - defensive
-        raise AdoptError(
-            "RELEASE_FAILED", str(exc), hint="See stderr for details"
-        ) from exc
 
-    tag_created = True
-    pushed = False
+        project_name = _infer_project_name(
+            options.project_name,
+            prep.workdir,
+            options.repo,
+        )
 
-    if options.dry_run:
-        _delete_tag(repo, new_tag)
-        tag_created = False
-    else:
-        pushed = _maybe_push_tag(repo, new_tag, options.push_remote)
+        try:
+            changelog = auto_release(
+                project_name,
+                repo_dir=prep.workdir,
+                bump=options.bump,
+                range_mode=options.range_mode,
+                strict_ancestor=options.strict_ancestor,
+                quiet=options.quiet,
+                verbose=options.verbose,
+            )
+        except Exception as exc:  # pragma: no cover - defensive
+            raise AdoptError(
+                "RELEASE_FAILED", str(exc), hint="See stderr for details"
+            ) from exc
 
-    workdir_persisted = prep.cleanup is None
+        tag_created = True
+        pushed = False
 
-    if options.changelog_out:
-        options.changelog_out.parent.mkdir(parents=True, exist_ok=True)
-        options.changelog_out.write_text(changelog)
+        if options.dry_run:
+            _delete_tag(repo, new_tag)
+            tag_created = False
+        else:
+            pushed = _maybe_push_tag(repo, new_tag, options.push_remote)
 
-    next_steps = _next_steps(
-        repo_spec=options.repo,
-        workdir=prep.workdir,
-        workdir_persisted=workdir_persisted,
-        new_tag=new_tag,
-        push_remote=options.push_remote,
-        dry_run=options.dry_run,
-        pushed=pushed,
-    )
+        workdir_persisted = prep.cleanup is None
 
-    duration_ms = int((perf_counter() - start) * 1000)
+        if options.changelog_out:
+            options.changelog_out.parent.mkdir(parents=True, exist_ok=True)
+            options.changelog_out.write_text(changelog)
 
-    result = AdoptResult(
-        repo=options.repo,
-        project_name=project_name,
-        workdir=prep.workdir,
-        workdir_persisted=workdir_persisted,
-        ref=active_ref,
-        commit=str(commit.id),
-        default_branch=head.shorthand or None,
-        previous_tag=previous_tag,
-        new_version=new_version,
-        new_tag=new_tag,
-        release_type=options.bump,
-        dry_run=options.dry_run,
-        tag_created=tag_created,
-        pushed=pushed,
-        changelog=changelog,
-        changelog_path=options.changelog_out,
-        next_steps=next_steps,
-        duration_ms=duration_ms,
-    )
+        next_steps = _next_steps(
+            repo_spec=options.repo,
+            workdir=prep.workdir,
+            workdir_persisted=workdir_persisted,
+            new_tag=new_tag,
+            push_remote=options.push_remote,
+            dry_run=options.dry_run,
+            pushed=pushed,
+        )
 
-    if prep.cleanup is not None:
-        prep.cleanup()
+        duration_ms = int((perf_counter() - start) * 1000)
 
-    return result
+        return AdoptResult(
+            repo=options.repo,
+            project_name=project_name,
+            workdir=prep.workdir,
+            workdir_persisted=workdir_persisted,
+            ref=active_ref,
+            commit=str(commit.id),
+            default_branch=head.shorthand or None,
+            previous_tag=previous_tag,
+            new_version=new_version,
+            new_tag=new_tag,
+            release_type=options.bump,
+            dry_run=options.dry_run,
+            tag_created=tag_created,
+            pushed=pushed,
+            changelog=changelog,
+            changelog_path=options.changelog_out,
+            next_steps=next_steps,
+            duration_ms=duration_ms,
+        )
+    finally:
+        if prep.cleanup is not None:
+            prep.cleanup()
 
 
 def render_result(result: AdoptResult, output_format: str) -> str:
@@ -283,7 +293,7 @@ class PreparedRepo:
 
 
 def _prepare_repository(
-    repo_spec: str, workdir_arg: Path | None, depth: int
+    repo_spec: str, workdir_arg: Path | None, depth: int, *, keep_workdir: bool
 ) -> PreparedRepo:
     remote_like = _looks_like_remote(repo_spec)
 
@@ -335,7 +345,11 @@ def _prepare_repository(
         )
 
     temp_dir = Path(tempfile.mkdtemp(prefix="girokmoji-adopt-"))
-    repo = _clone(repo_spec, temp_dir, depth)
+    try:
+        repo = _clone(repo_spec, temp_dir, depth)
+    except Exception:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        raise
 
     def _cleanup() -> None:
         shutil.rmtree(temp_dir, ignore_errors=True)
@@ -345,7 +359,7 @@ def _prepare_repository(
         workdir=Path(repo.workdir),
         uses_existing=False,
         remote_like=True,
-        cleanup=_cleanup,
+        cleanup=None if keep_workdir else _cleanup,
     )
 
 

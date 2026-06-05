@@ -586,8 +586,8 @@ def by_gitmoji() -> dict[str, CatGitmoji]:
 
 @lru_cache(maxsize=1)
 def any_to_catmoji(to_find: str) -> CatGitmoji:
-    for gitmoji in by_gitmoji():
-        if to_find == gitmoji:
-            return by_gitmoji()[gitmoji]
+    mapping = by_gitmoji()
+    if to_find in mapping:
+        return mapping[to_find]
 
     raise NoSuchGitmojiSupportedError
